@@ -6,24 +6,23 @@ using boost::math::normal;
 #include "risk_neutral.h"
 
 void option_price(
-        double S0,
-        double K,
-        double r,
-        double sigma,
-        double t,
+        const double S0,
+        const double K,
+        const double r,
+        const double sigma,
+        const double t,
         double& price,
         double& Phi1,
         double& Phi2,
-        bool call = true,
-        double q = 0,
+        const bool call,
+        const double q
         ) {
     double d1, d2;
-    double Phi1, Phi2;
 
     // Define N(0,1) object
     normal N(0.0, 1.0);
 
-    d1 = (log(S0/K) + (r-q+0.5*pow(sigma,2.0) * t) / (sigma * sqrt(t)));
+    d1 = (log(S0/K) + (r-q+0.5*pow(sigma, 2.0)) * t) / (sigma * sqrt(t));
     d2 = d1 - sigma * sqrt(t);
 
     if (call) {
@@ -40,9 +39,9 @@ void option_price(
 }
 
 std::vector<double> wang_transform(
-        std::vector<double> P,
-        double sharpe_ratio,
-        bool inverse = false
+        const std::vector<double> P,
+        const double sharpe_ratio,
+        const bool inverse
         ) {
     // Create a copy of the input and manipulate this instead
     std::vector<double> Q = P;
@@ -52,11 +51,11 @@ std::vector<double> wang_transform(
 
     if (!inverse) {
         for(auto& p : Q) {
-            p = cdf(N, quantile(N, p) + sharpe_ratio)
+            p = cdf(N, quantile(N, p) + sharpe_ratio);
         }
     } else {
         for(auto& p : Q) {
-            p = cdf(N, quantile(N, p) - sharpe_ratio)
+            p = cdf(N, quantile(N, p) - sharpe_ratio);
         }
     }
 

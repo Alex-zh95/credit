@@ -3,7 +3,7 @@
 /* @Filename:        risk_neutral.h
  * @Description:     Declares functions for dealing with risk-neutral probability space.
  */
-#include <vector.h>
+#include <vector>
 
 /* @Description:    Calculate the vanilla option price via the Black-Scholes equation, using the provided inputs:
  *
