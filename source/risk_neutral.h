@@ -41,10 +41,9 @@ void option_price(
  *
  * @Returns:        std::vector<double> Q:      Output vector of probabilities
  */
-void wang_transform(
+std::vector<double> wang_transform(
         std::vector<double> P,
         double sharpe_ratio,
-        std::vector<double>& Q,
         bool inverse = false
         );
 

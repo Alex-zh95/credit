@@ -39,27 +39,26 @@ void option_price(
     }
 }
 
-void wang_transform(
+std::vector<double> wang_transform(
         std::vector<double> P,
         double sharpe_ratio,
-        std::vector<double>& Q,
         bool inverse = false
         ) {
     // Create a copy of the input and manipulate this instead
-    std::vector<double> result = P;
+    std::vector<double> Q = P;
 
     // Define N(0,1) object
     normal N(0.0, 1.0);
 
     if (!inverse) {
-        for(auto& p : result) {
+        for(auto& p : Q) {
             p = cdf(N, quantile(N, p) + sharpe_ratio)
         }
     } else {
-        for(auto& p : result) {
+        for(auto& p : Q) {
             p = cdf(N, quantile(N, p) - sharpe_ratio)
         }
     }
 
-    Q = result;
+    return Q;
 }
