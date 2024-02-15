@@ -1,6 +1,5 @@
-/* cpy_credit.cpp
- *
- * Implement exports for various functions within risk_neutral.h for Python interface.
+/* @Filename:       cpy_credit.cpp
+ * @Desrciption:    Implement exports for various functions within risk_neutral.h for Python interface.
  */
 
 #include <pybind11/pybind11.h>
@@ -8,6 +7,9 @@
 namespace py = pybind11;
 
 #include "risk_neutral.h"
+
+// Disable template-based conversion of machinery types to allow for passing by reference for std::vector
+PYBIND11_MAKE_OPAQUE(std::vector<double>);
 
 PYBIND11_MODULE(cpy_credit, m) {
     m.doc() = "Module containing procedures for structural credit models and capital determination.";
