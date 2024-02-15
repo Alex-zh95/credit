@@ -87,12 +87,12 @@ double _implied_volatility (
 }
 
 double get_asset_volatility(
-    const std::vector<double>& E,
+    const std::vector<double> E,
     const double sigma_e,
     const double L,
     const double r,
     const double t,
-    unsigned int n_iter = 50
+    unsigned int n_iter
 ) {
     // Check the trivial case: if no leverage, asset and equity volatility equate
     if (L < TOL)

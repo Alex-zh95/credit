@@ -54,15 +54,17 @@ std::vector<double> wang_transform(
  *                  double sigma_e:             Equity volatility
  *                  double L:                   Face value of debt
  *                  double r:                   Risk-free rate of return
+ *                  double t:                   Debt duration, defaulted to 1
  *                  uint n_iter:                Maximum number of iterations, defaulted to 50
  *
  * @Returns:        double sigma_a:             Asset volatility
  */
 double get_asset_volatility(
-    std::vector<double>& E,
+    std::vector<double> E,
     double sigma_e,
     double L,
     double r,
+    double t = 1,
     unsigned int n_iter = 50
 );
 
