@@ -60,15 +60,8 @@ std::vector<double> wang_transform(
     // Define N(0,1) object
     normal N(0.0, 1.0);
 
-    if (!inverse) {
-        for(auto& p : P) {
-            p = cdf(N, quantile(N, p) + sharpe_ratio);
-        }
-    } else {
-        for(auto& p : P) {
-            p = cdf(N, quantile(N, p) - sharpe_ratio);
-        }
-    }
+    for(auto& p : P) 
+        p = cdf(N, quantile(N, p) + (inverse?-1:1) * sharpe_ratio);
 
     return P;
 }
