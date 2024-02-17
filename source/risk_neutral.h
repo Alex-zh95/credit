@@ -68,16 +68,6 @@ double get_asset_volatility(
     unsigned int n_iter = 50
 );
 
-// Helper functor for solving for implied equity.
-// double _implied_volatility (
-//     double& e0,
-//     const double& S0,
-//     const double& K,
-//     const double& r,
-//     const double& sigma,
-//     const double& t
-// );
-
 /* @Description:    Calculate risk-neutral probability of default.
  *
  * @Params:         double a0:              Current asset value
