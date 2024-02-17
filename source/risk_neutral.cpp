@@ -66,7 +66,7 @@ std::vector<double> wang_transform(
     return P;
 }
 
-double _implied_volatility (
+double _bs_imply (
     double& e0,
     const double& S0,
     const double& K,
@@ -98,7 +98,7 @@ double get_asset_volatility(
     std::vector<double> A(E);
     std::vector<double> log_returns(N-1);
 
-    double sigma_a = 0.5;
+    double sigma_a;
     double prev_sigma_a;
 
     // Iterative steps
@@ -118,7 +118,7 @@ double get_asset_volatility(
 
             std::pair<double, double> result = bisect(
                 // Solve for sigma_a to build out implied asset value
-                [&cur_equity, &L, &r, &sigma_a, &t](double _a) { return _implied_volatility(_a, cur_equity, L, r, sigma_a, t); },
+                [&cur_equity, &L, &r, &sigma_a, &t](double _a) { return _bs_imply(_a, cur_equity, L, r, sigma_a, t); },
                 0.0,
                 1.0,
                 [](double l, double r) { return abs(l-r) < TOL; }
