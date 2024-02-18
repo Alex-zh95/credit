@@ -7,6 +7,7 @@ name = "pypi"
 numpy = "*"
 jupyter = "*"
 yfinance = "*"
+pyarrow = "*"
 
 [dev-packages]
 
