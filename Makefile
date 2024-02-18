@@ -10,4 +10,4 @@ pyinit:
 	pipenv install
 
 pytests:
-	g++ -Wall -shared -std=c++20 -fPIC $(python -m pybind11 --includes) source/cpy_credit.cpp source/risk_neutral.cpp -o cpy_credit.so
+	g++ -Wall -shared -std=c++20 -fPIC $(python -m pybind11 --includes) source/cpy_credit.cpp source/risk_neutral.cpp -o out/cpy_credit.so
