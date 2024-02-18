@@ -34,4 +34,18 @@ PYBIND11_MODULE(cpy_credit, m) {
         "Apply Wang transform to provided probability vector",
         py::arg("P"), py::arg("sharpe_ratio"), py::arg("inverse") = false
     );
+
+    m.def(
+        "get_returns_with_put",
+        &get_returns_with_put,
+        "Calculate expected returns with protection from put option",
+        py::arg("y"), py::arg("y_var"), py::arg("put"), py::arg("r")
+    );
+
+    m.def(
+        "get_min_ROL",
+        &get_min_ROL,
+        "Obtain minimum rates on line. Set p=0 and i=risk-free rate if not using options",
+        py::arg("y"), py::arg("p"), py::arg("i")
+    );
 }
