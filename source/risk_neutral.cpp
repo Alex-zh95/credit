@@ -2,12 +2,14 @@
 #include <cmath>
 using std::log;
 using std::pow;
+using std::exp;
+using std::sqrt;
 
 #include <boost/math/distributions/normal.hpp>
 using boost::math::normal;
 
 #include <boost/math/statistics/univariate_statistics.hpp>
-// using boost::math::statistics::mean;
+using boost::math::statistics::mean;
 using boost::math::statistics::variance;
 
 #include <boost/math/tools/roots.hpp>
@@ -147,4 +149,30 @@ double get_default_probability(
 
     double distance_to_default = (log(a0 / L) + (mu_a + 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
     return cdf(N, -distance_to_default);
+}
+
+double get_min_ROL(
+    double y,
+    double p,
+    double i
+) {
+    return ((1+y)*(1+p) - (1+i))/((1+i)*(1+y));
+}
+
+double get_returns_with_put(
+    const double y,
+    const double y_var,
+    const double put,
+    const double r
+) {
+    // Determine historic investment mean return
+    const double sigma2_pt = log(1 + y_var/pow(y, 2));
+    const double mu_pt = log(pow(y, 2) / sqrt(y_var + pow(y, 2)));
+
+    // Determine the mean return with put protection
+    normal norm(0.0, 1.0);
+    const double zeta = (log(1+r) - mu_pt) / sqrt(sigma2_pt);
+    double i_trunc = (1+r)*cdf(norm, zeta) + exp(mu_pt + sigma2_pt/2) - 1;
+
+    return i_trunc;
 }

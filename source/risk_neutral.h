@@ -13,7 +13,7 @@
  *                  double sigma:       Volatility of observed price
  *                  double t:           Duration of the option (expiry)
  *                  double q = 0:       Assumed constant and continuous dividend rate
- *                  bool call = true    Whether looking at call or put
+ *                  bool call:          Whether looking at call or put, defaulted to true
  *
  * @Returns:        double& price       Price of option at time 0
  *                  double& Phi1        Delta of the option
@@ -86,4 +86,32 @@ double get_default_probability(
     double t = 1
 );
 
+/* @Description:    Calculate minimum rate on line (ROL).
+ *                  For the non-option method, set i=risk-free rate and p=0.
+ *
+ * @Params:         double y:               Target investment rate (yield),
+ *                  double p:               Price of put option used to hedge against investment achieving less than risk-free return,
+ *                  double i:               Expected investmet return with put protection.
+ *
+ * @Returns:        double min_ROL
+ */
+double get_min_ROL(
+    double y,
+    double p,
+    double i
+);
+
+/* @Description:        Calculate returns on investment with purchase of put option.
+ *
+ * @Params:             double y:           Original target investment rate (yield)
+ *                      double y_var:       Investment volatility (e.g. implied from put price).
+ *                      double put:         Market price of put option.
+ *                      double r:           Risk-free rate.
+ */
+double get_returns_with_put(
+    double y,
+    double y_var,
+    double put,
+    double r
+);
 #endif
