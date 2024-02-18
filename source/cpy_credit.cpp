@@ -3,13 +3,10 @@
  */
 
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>  // Needed for std::vector
+#include <pybind11/stl.h>  // Needed for binding std::vector
 namespace py = pybind11;
 
 #include "risk_neutral.h"
-
-// Disable template-based conversion of machinery types to allow for passing by reference for std::vector
-PYBIND11_MAKE_OPAQUE(std::vector<double>);
 
 PYBIND11_MODULE(cpy_credit, m) {
     m.doc() = "Module containing procedures for structural credit models and capital determination.";
