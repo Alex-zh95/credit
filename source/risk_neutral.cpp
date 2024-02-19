@@ -121,8 +121,8 @@ double get_asset_volatility(
             std::pair<double, double> result = bisect(
                 // Solve for sigma_a to build out implied asset value
                 [&cur_equity, &L, &r, &sigma_a, &t](double _a) { return _bs_imply(_a, cur_equity, L, r, sigma_a, t); },
-                0.0,
-                1.0,
+                sigma_e/2,
+                sigma_e*2,
                 [](double l, double r) { return abs(l-r) < TOL; }
             );
 
