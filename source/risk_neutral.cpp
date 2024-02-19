@@ -16,6 +16,7 @@ using boost::math::statistics::variance;
 using boost::math::tools::bisect;
 
 #include "risk_neutral.h"
+// #include <iostream>
 
 #ifndef TOL
 #define TOL 1e-6
@@ -116,18 +117,31 @@ double get_asset_volatility(
 
         // Using this guess of sigma_a, calculate the implied asset values in vector
         for (unsigned int j = 0; j < N; ++j) {
-            const double& cur_equity = E[j];
+            const double& cur_equity = E[j]; 
 
-            std::pair<double, double> result = bisect(
-                // Solve for sigma_a to build out implied asset value
-                [&cur_equity, &L, &r, &sigma_a, &t](double _a) { return _bs_imply(_a, cur_equity, L, r, sigma_a, t); },
-                sigma_e/2,
-                sigma_e*2,
-                [](double l, double r) { return abs(l-r) < TOL; }
-            );
+            double x1, x2, x0;
+            x1 = cur_equity / 2;
+            x2 = cur_equity * 2;
 
+            for (unsigned int k = 0; k < n_iter; ++k) {
+                auto f = [&](double _a) { return _bs_imply(_a, cur_equity, L, r, sigma_a, t); };
+
+                x0 = (x1 * f(x2) - x2 * f(x1)) / (f(x2) - f(x1));
+                double c = f(x0);
+
+                if ((c < TOL) && (c > -TOL))
+                    break;
+
+                if (c < -TOL) {
+                    x1 = x2;
+                    x2 = x0;
+                } else {
+                    x2 = x1;
+                    x1 = x0;
+                }
+            }
             // Save down new asset value
-            A[j] = (result.first + result.second) / 2;
+            A[j] = x0;
         }
 
         // Early stop if difference between previous and current sigma_iterations is below tolerance
