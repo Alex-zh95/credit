@@ -4,6 +4,7 @@ tests:
 	g++ -Wall -std=c++20 test/option_price_unit.cpp source/risk_neutral.cpp -o out/option_price_unit.out
 	g++ -Wall -std=c++20 test/wang_transform_unit.cpp source/risk_neutral.cpp -o out/wang_transform_unit.out
 	g++ -Wall -std=c++20 test/ROL_unit.cpp source/risk_neutral.cpp -o out/ROL_unit.out
+	g++ -Wall -std=c++20 test/implied_asset_unit.cpp source/risk_neutral.cpp -o out/implied_asset_unit.out
 
 pyinit:
 	mkdir -p .venv
