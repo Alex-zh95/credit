@@ -20,16 +20,16 @@
  *                  double& Phi2        Risk-neutral probability that option is exercised
  */
 void option_price(
-    double S0,
-    double K,
-    double r,
-    double sigma,
-    double t,
+    const double S0,
+    const double K,
+    const double r,
+    const double sigma,
+    const double t,
     double& price,
     double& Phi1,
     double& Phi2,
-    bool call = true,
-    double q = 0
+    const bool call = true,
+    const double q = 0
 );
 
 /* @Description:    Converts a given actual probability vector into risk-adjusted probability.
@@ -43,14 +43,14 @@ void option_price(
  */
 std::vector<double> wang_transform(
     std::vector<double> P,
-    double sharpe_ratio,
-    bool inverse = false
+    const double sharpe_ratio,
+    const bool inverse = false
 );
 
 /* @Description:    Derive asset volatility via equity volatility numerically.
  *                  Motivation for this is due to asset volatility not being observable.
  *
- * @Params:         std::vector<double> E:      Vector of stock values
+ * @Params:         std::vector<double> &E:     Vector of stock values
  *                  double sigma_e:             Equity volatility
  *                  double L:                   Face value of debt
  *                  double r:                   Risk-free rate of return
@@ -60,11 +60,11 @@ std::vector<double> wang_transform(
  * @Returns:        double sigma_a:             Asset volatility
  */
 double get_asset_volatility(
-    std::vector<double> E,
-    double sigma_e,
-    double L,
-    double r,
-    double t = 1,
+    const std::vector<double> &E,
+    const double sigma_e,
+    const double L,
+    const double r,
+    const double t = 1,
     unsigned int n_iter = 50
 );
 
@@ -79,11 +79,11 @@ double get_asset_volatility(
  * @Returns:        double p_default:       Probability of default
  */
 double get_default_probability(
-    double a0,
-    double mu_a,
-    double sigma_a,
-    double L,
-    double t = 1
+    const double a0,
+    const double mu_a,
+    const double sigma_a,
+    const double L,
+    const double t = 1
 );
 
 /* @Description:    Calculate minimum rate on line (ROL).
@@ -96,9 +96,9 @@ double get_default_probability(
  * @Returns:        double min_ROL
  */
 double get_min_ROL(
-    double y,
-    double p,
-    double i
+    const double y,
+    const double p,
+    const double i
 );
 
 /* @Description:        Calculate returns on investment with purchase of put option.
@@ -109,9 +109,9 @@ double get_min_ROL(
  *                      double r:           Risk-free rate.
  */
 double get_returns_with_put(
-    double y,
-    double y_var,
-    double put,
-    double r
+    const double y,
+    const double y_var,
+    const double put,
+    const double r
 );
 #endif

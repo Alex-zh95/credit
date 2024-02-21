@@ -83,7 +83,7 @@ double _bs_imply (
 }
 
 double get_asset_volatility(
-    const std::vector<double> E,
+    const std::vector<double> &E,
     const double sigma_e,
     const double L,
     const double r,
@@ -166,9 +166,9 @@ double get_default_probability(
 }
 
 double get_min_ROL(
-    double y,
-    double p,
-    double i
+    const double y,
+    const double p,
+    const double i
 ) {
     return ((1+y)*(1+p) - (1+i))/((1+i)*(1+y));
 }
