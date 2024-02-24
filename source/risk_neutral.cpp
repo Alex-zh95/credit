@@ -101,7 +101,7 @@ double get_asset_volatility(
     std::vector<double> A(E);
     std::vector<double> log_returns(N-1);
 
-    double sigma_a;
+    double sigma_a = 0.5;
     double prev_sigma_a;
 
     // Iterative steps
