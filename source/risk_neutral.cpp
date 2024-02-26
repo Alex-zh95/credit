@@ -69,10 +69,10 @@ std::vector<double> wang_transform(
     return P;
 }
 
-double _bs_imply (
-    double& e0,
-    const double& S0,
-    const double& K,
+double _bs_imply_asset (
+    const double& e0,       // Known equity price
+    double& S0,             // Asset price to solve
+    const double& K,        // Strike as reserve or debt
     const double& r,
     const double& sigma,
     const double& t
@@ -128,7 +128,7 @@ double get_asset_volatility(
             x2 = E[j] * 2;
 
             for (unsigned int k = 0; k < n_iter; ++k) {
-                auto f = [&](double _a) { return _bs_imply(_a, E[j], L, r, sigma_a, t); };
+                auto f = [&](double _a) { return _bs_imply_asset(E[j], _a, L, r, sigma_a, t); };
 
                 x0 = (x1 * f(x2) - x2 * f(x1)) / (f(x2) - f(x1));
                 c = f(x0);
