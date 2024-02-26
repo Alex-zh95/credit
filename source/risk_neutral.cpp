@@ -98,36 +98,40 @@ double get_asset_volatility(
     const unsigned int N = E.size();
 
     // Initialize guesses: A = E and sigma_a is the stdev of log returns
-    std::vector<double> A(E);
+    std::vector<double> A = E;
     std::vector<double> log_returns(N-1);
 
     double sigma_a = 0.5;
     double prev_sigma_a;
 
+    // Intermediate variables for secant method
+    double x1, x2, x0, c;
+
     // Iterative steps
-    for (unsigned int i = 0; i < n_iter; ++i) {
+    for (unsigned int run_iter = 0; run_iter < n_iter; ++run_iter) {
         // Save down a previous result for sigma_a
         prev_sigma_a = sigma_a; 
 
         // update sigma_a with current asset value vector
-        for (unsigned int i = 1; i < N; ++i) 
-            log_returns[i] = log(A[i] / A[i-1]);
+        for (unsigned int ii = 1; ii < N; ++ii) 
+            log_returns[ii-1] = log(A[ii] / A[ii-1]);
 
         sigma_a = sqrt(variance(log_returns));
 
+        // Early stop if difference between previous and current sigma_iterations is below tolerance
+        if (abs(sigma_a - prev_sigma_a) < TOL)
+            break;
+
         // Using this guess of sigma_a, calculate the implied asset values in vector
         for (unsigned int j = 0; j < N; ++j) {
-            const double& cur_equity = E[j]; 
-
-            double x1, x2, x0;
-            x1 = cur_equity / 2;
-            x2 = cur_equity * 2;
+            x1 = E[j] / 2;
+            x2 = E[j] * 2;
 
             for (unsigned int k = 0; k < n_iter; ++k) {
-                auto f = [&](double _a) { return _bs_imply(_a, cur_equity, L, r, sigma_a, t); };
+                auto f = [&](double _a) { return _bs_imply(_a, E[j], L, r, sigma_a, t); };
 
                 x0 = (x1 * f(x2) - x2 * f(x1)) / (f(x2) - f(x1));
-                double c = f(x0);
+                c = f(x0);
 
                 if ((c < TOL) && (c > -TOL))
                     break;
@@ -140,13 +144,10 @@ double get_asset_volatility(
                     x1 = x0;
                 }
             }
+
             // Save down new asset value
             A[j] = x0;
         }
-
-        // Early stop if difference between previous and current sigma_iterations is below tolerance
-        if (abs(sigma_a - prev_sigma_a) < TOL)
-            break;
     }
 
     return sigma_a;
