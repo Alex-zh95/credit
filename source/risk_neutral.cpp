@@ -9,8 +9,8 @@ using std::sqrt;
 using boost::math::normal;
 
 #include <boost/math/statistics/univariate_statistics.hpp>
-using boost::math::statistics::mean;
-using boost::math::statistics::variance;
+// using boost::math::statistics::mean;
+// using boost::math::statistics::variance;
 
 #include <boost/math/tools/roots.hpp>
 using boost::math::tools::bisect;
@@ -99,7 +99,6 @@ double get_asset_volatility(
 
     // Initialize guesses: A = E and sigma_a is the stdev of log returns
     std::vector<double> A = E;
-    std::vector<double> log_returns(N-1);
 
     double sigma_a = 0.5;
     double prev_sigma_a;
@@ -113,10 +112,10 @@ double get_asset_volatility(
         prev_sigma_a = sigma_a; 
 
         // update sigma_a with current asset value vector
-        for (unsigned int ii = 1; ii < N; ++ii) 
-            log_returns[ii-1] = log(A[ii] / A[ii-1]);
-
-        sigma_a = sqrt(variance(log_returns));
+        // From Itô Lemma, we have the following relationship: sigma_e * E[j] / A[j] = Phi1 * sigma_a
+        double eq, Phi1, Phi2;
+        option_price(A[N-1], L, r, sigma_a, t, eq ,Phi1, Phi2);
+        sigma_a = sigma_e * E[N-1] / A[N-1] / Phi1;
 
         // Early stop if difference between previous and current sigma_iterations is below tolerance
         if (abs(sigma_a - prev_sigma_a) < TOL)
