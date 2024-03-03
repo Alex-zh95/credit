@@ -8,13 +8,6 @@ using std::sqrt;
 #include <boost/math/distributions/normal.hpp>
 using boost::math::normal;
 
-#include <boost/math/statistics/univariate_statistics.hpp>
-// using boost::math::statistics::mean;
-// using boost::math::statistics::variance;
-
-#include <boost/math/tools/roots.hpp>
-using boost::math::tools::bisect;
-
 #include "risk_neutral.h"
 // #include <iostream>
 
