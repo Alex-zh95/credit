@@ -17,7 +17,8 @@ Repository of code relating to modeling credit risk.
     1. Start with some initial guess of asset volatility.
     2. Using this asset volatility, imply the asset price by solving the Merton model backwards. We perform this numerically.
     3. With a new vector of asset prices, update our guess of asset volatility. Repeat steps 2 and 3 until convergence.
-- The "Delta" of the option is the risk-neutral probability of default, which can be viewed as an insurance rate on line (with risk-free discounting).
+- The probability of default is equivalent to the probability of the call option not being exercised (i.e. expiring out of the money and so equity is worthless).
+    - This can be viewed as insurance rate on line post discounting to present value.
 
 Idea for this method of iteratively solving for implied asset volatility [here](https://www.bradfordlynch.com/blog/2017/05/20/ProbabilityOfDefault.html)
 

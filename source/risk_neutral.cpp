@@ -154,7 +154,7 @@ double get_default_probability(
 ) {
     normal N(0.0, 1.0);
 
-    double distance_to_default = (log(a0 / L) + (mu_a + 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
+    double distance_to_default = (log(a0 / L) + (mu_a - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
     return cdf(N, -distance_to_default);
 }
 
