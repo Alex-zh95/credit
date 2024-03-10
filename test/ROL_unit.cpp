@@ -29,13 +29,13 @@ int main() {
 
     double i_trunc = get_returns_with_put(target_growth, growth_variance, put_price, put_strike);
     cout << "Growth with put:       " << i_trunc*100 << "%\n";
-    double rol = get_min_ROL(target_growth, put_price, i_trunc);
+    double rol = get_min_capital_ROL(target_growth, put_price, i_trunc);
     cout << "ROL = " << rol*100 << "%\n\n";
 
     // *** Part 2 ***: Test with no put option
     cout << "Testing ROL calculations...without put option.\n";
     cout << "Using same target growth and risk-free rate.\n";
-    double rol2 = get_min_ROL(target_growth, 0.0, put_strike);
+    double rol2 = get_min_capital_ROL(target_growth, 0.0, put_strike);
     cout << "ROL = " << rol2*100 << "%\n";
 
     cout << "Option ROL < Swap ROL? " << ((rol <= rol)?"Yes":"No") << "\n\n";
@@ -46,7 +46,7 @@ int main() {
 
     // Use bisect to find root
     std::pair<double, double> result = bisect(
-        [&](double _tgt) { return get_min_ROL(_tgt, put_price, i_trunc) - mkt_rol; },
+        [&](double _tgt) { return get_min_capital_ROL(_tgt, put_price, i_trunc) - mkt_rol; },
         0.0,
         1.0,
         [](double l, double r) { return abs(l-r) < TOL; }

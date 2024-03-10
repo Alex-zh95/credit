@@ -19,7 +19,7 @@
  *                  double& Phi1        Delta of the option
  *                  double& Phi2        Risk-neutral probability that option is exercised
  */
-void option_price(
+void vanilla_option_price(
     const double S0,
     const double K,
     const double r,
@@ -47,7 +47,7 @@ std::vector<double> wang_transform(
     const bool inverse = false
 );
 
-/* @Description:    Derive asset volatility via equity volatility numerically.
+/* @Description:    Derive asset volatility via equity volatility numerically, using European vanilla call.
  *                  Motivation for this is due to asset volatility not being observable.
  *
  * @Params:         std::vector<double> &E:     Vector of stock values
@@ -59,7 +59,7 @@ std::vector<double> wang_transform(
  *
  * @Returns:        double sigma_a:             Asset volatility
  */
-double get_asset_volatility(
+double get_vanilla_asset_volatility(
     const std::vector<double> &E,
     const double sigma_e,
     const double L,
@@ -78,7 +78,7 @@ double get_asset_volatility(
  *
  * @Returns:        double p_default:       Probability of default
  */
-double get_default_probability(
+double get_vanilla_default_probability(
     const double a0,
     const double mu_a,
     const double sigma_a,
@@ -95,7 +95,7 @@ double get_default_probability(
  *
  * @Returns:        double min_ROL
  */
-double get_min_ROL(
+double get_min_capital_ROL(
     const double y,
     const double p,
     const double i

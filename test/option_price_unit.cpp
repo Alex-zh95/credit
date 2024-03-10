@@ -30,9 +30,9 @@ double expected_put_Phi1 = 0.949248908843968;
 double expected_put_Phi2 = 0.9576656456260665;
 
 int main() {
-    std::cout << "Testing function risk_neutral::option_price." << std::endl;
+    std::cout << "Testing function risk_neutral::vanilla_option_price." << std::endl;
 
-    option_price(init, strike, interest, volatility, duration, call_price, call_phi1, call_phi2);
+    vanilla_option_price(init, strike, interest, volatility, duration, call_price, call_phi1, call_phi2);
 
     std::cout << "Call price    =    " << call_price << std::endl;
     std::cout << "Phi1          =    " << call_phi1 << std::endl;
@@ -53,7 +53,7 @@ int main() {
     else
         std::cout << "Check Phi2!!\n";
 
-    option_price(init, strike, interest, volatility, duration, put_price, put_phi1, put_phi2, false, dividend);
+    vanilla_option_price(init, strike, interest, volatility, duration, put_price, put_phi1, put_phi2, false, dividend);
     std::cout << "Put price     =   " << put_price << std::endl;
     std::cout << "Phi1          =    " << put_phi1 << std::endl;
     std::cout << "Phi2          =    " << put_phi2 << std::endl;

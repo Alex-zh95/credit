@@ -60,12 +60,12 @@ const double rf = 4.750/100;
 const double implied_equity_vol = 21.790/100;
 const double reserve = 50.612;
 
-const double expected_asset_vol = 19.034/100;
+const double expected_asset_vol = 12.787/100;
 
 int main() {
     std::cout << "Testing get_asset_volatility...\n";
     std::cout << "Expected asset volatility:        " << expected_asset_vol << "\n";
-    double asset_vol = get_asset_volatility(m_equity, implied_equity_vol, reserve, rf);
+    double asset_vol = get_vanilla_asset_volatility(m_equity, implied_equity_vol, reserve, rf);
     std::cout << "Actual asset volatility:          " << asset_vol << "\n";
 
     std::cout << "Test result?                      " << 

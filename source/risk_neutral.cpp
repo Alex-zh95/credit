@@ -15,7 +15,7 @@ using boost::math::normal;
 #define TOL 1e-6
 #endif
 
-void option_price(
+void vanilla_option_price(
     const double S0,
     const double K,
     const double r,
@@ -71,11 +71,11 @@ double _bs_imply_asset (
     const double& t
 ) {
     double impl_equity, Phi1, Phi2;
-    option_price(S0, K, r, sigma, t, impl_equity, Phi1, Phi2);
+    vanilla_option_price(S0, K, r, sigma, t, impl_equity, Phi1, Phi2);
     return (e0 - impl_equity);
 }
 
-double get_asset_volatility(
+double get_vanilla_asset_volatility(
     const std::vector<double> &E,
     const double sigma_e,
     const double L,
@@ -107,7 +107,7 @@ double get_asset_volatility(
         // update sigma_a with current asset value vector
         // From Itô Lemma, we have the following relationship: sigma_e * E[j] / A[j] = Phi1 * sigma_a
         double eq, Phi1, Phi2;
-        option_price(A[N-1], L, r, sigma_a, t, eq ,Phi1, Phi2);
+        vanilla_option_price(A[N-1], L, r, sigma_a, t, eq ,Phi1, Phi2);
         sigma_a = sigma_e * E[N-1] / A[N-1] / Phi1;
 
         // Early stop if difference between previous and current sigma_iterations is below tolerance
@@ -145,7 +145,7 @@ double get_asset_volatility(
     return sigma_a;
 }
 
-double get_default_probability(
+double get_vanilla_default_probability(
     const double a0,
     const double mu_a,
     const double sigma_a,
@@ -158,7 +158,7 @@ double get_default_probability(
     return cdf(N, -distance_to_default);
 }
 
-double get_min_ROL(
+double get_min_capital_ROL(
     const double y,
     const double p,
     const double i
