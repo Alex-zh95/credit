@@ -15,7 +15,7 @@ using boost::math::normal;
 #endif
 
 template <typename Func, typename T>
-T secant_root(Func f, T& x0, double tol, int n_iter) {
+T secant_root(Func&& f, T& x0, T tol, int n_iter) {
     // Define a neighborhood around the initial value x0
     T x1 = x0/2;
     T x2 = x0*2;

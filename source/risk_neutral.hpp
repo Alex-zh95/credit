@@ -126,9 +126,9 @@ double get_returns_with_put(
  */
 template <typename Func, typename T>
 T secant_root(
-    Func f,
+    Func&& f,
     T& x0,
-    const double tol = 1e-3,
+    const T tol = 1e-3,
     const int n_iter = 50
 );
 #endif
