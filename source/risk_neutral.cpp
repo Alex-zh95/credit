@@ -8,12 +8,36 @@ using std::sqrt;
 #include <boost/math/distributions/normal.hpp>
 using boost::math::normal;
 
-#include "risk_neutral.h"
-// #include <iostream>
+#include "risk_neutral.hpp"
 
 #ifndef TOL
 #define TOL 1e-6
 #endif
+
+template <typename Func, typename T>
+T secant_root(Func f, T& x0, double tol, int n_iter) {
+    // Define a neighborhood around the initial value x0
+    T x1 = x0/2;
+    T x2 = x0*2;
+
+    for (auto iter = 0; iter < n_iter; ++iter) {
+        x0 = (x1 * f(x2) - x2 * f(x1)) / (f(x2) - f(x1));
+        auto c = f(x0);
+
+        if ((c < tol) && (c > -tol))
+            break;
+
+        if (c < -tol) {
+            x1 = x2;
+            x2 = x0;
+        } else {
+            x2 = x1;
+            x1 = x0;
+        }
+    }
+
+    return x0;
+}
 
 void vanilla_option_price(
     const double S0,
@@ -57,7 +81,7 @@ std::vector<double> wang_transform(
     normal N(0.0, 1.0);
 
     for(auto& p : P) 
-        p = cdf(N, quantile(N, p) + (inverse?-1:1) * sharpe_ratio);
+    p = cdf(N, quantile(N, p) + (inverse?-1:1) * sharpe_ratio);
 
     return P;
 }
@@ -83,9 +107,6 @@ double get_vanilla_asset_volatility(
     double sigma_a = 0.5;
     double prev_sigma_a;
 
-    // Intermediate variables for secant method
-    double x1, x2, x0, c;
-
     // Iterative steps
     for (unsigned int run_iter = 0; run_iter < n_iter; ++run_iter) {
         // Save down a previous result for sigma_a
@@ -103,33 +124,16 @@ double get_vanilla_asset_volatility(
 
         // Using this guess of sigma_a, calculate the implied asset values in vector
         for (unsigned int j = 0; j < N; ++j) {
-            x1 = E[j] / 2;
-            x2 = E[j] * 2;
+            double cur_equity = E[j];
 
-            for (unsigned int k = 0; k < n_iter; ++k) {
-                auto f = [&](double _a) { 
-                    double impl_equity, Phi1, Phi2;
-                    vanilla_option_price(_a, L, r, sigma_a, t, impl_equity, Phi1, Phi2);
-                    return (E[j] - impl_equity);
-                };
+            auto fn = [&L, &r, &sigma_a, &t, &cur_equity](double _a) { 
+                double impl_equity, Phi1, Phi2;
+                vanilla_option_price(_a, L, r, sigma_a, t, impl_equity, Phi1, Phi2);
+                return (cur_equity - impl_equity);
+            };
 
-                x0 = (x1 * f(x2) - x2 * f(x1)) / (f(x2) - f(x1));
-                c = f(x0);
-
-                if ((c < TOL) && (c > -TOL))
-                    break;
-
-                if (c < -TOL) {
-                    x1 = x2;
-                    x2 = x0;
-                } else {
-                    x2 = x1;
-                    x1 = x0;
-                }
-            }
-
-            // Save down new asset value
-            A[j] = x0;
+            // New root is the asset value
+            A[j] = secant_root(fn, cur_equity);
         }
     }
 

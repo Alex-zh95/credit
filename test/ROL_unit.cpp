@@ -6,7 +6,7 @@ using std::cout;
 #include <boost/math/tools/roots.hpp>
 using boost::math::tools::bisect;
 
-#include "../source/risk_neutral.h"
+#include "../source/risk_neutral.hpp"
 
 #ifndef TOL
 #define TOL 1e-3

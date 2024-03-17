@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include "../source/risk_neutral.h"
+#include "../source/risk_neutral.hpp"
 #include <cmath>
 
 std::vector<double> m_equity = {

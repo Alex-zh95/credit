@@ -37,3 +37,7 @@ Idea for this method of iteratively solving for implied asset volatility [here](
     - Taking $L \rightarrow 0$ yields a minimum rate on line (applicable if we are looking at very high excesses).
 - Incorporating the put option will allow for investment market sentiment in affecting risk load more dynamically.
     - We can start off by using underwriter-led rates on line, looking at available options for the types of investments desired evaluate and adjust back the risk load.
+
+## Basket Options
+
+[Link](https://quant.stackexchange.com/questions/57235/do-basket-options-have-a-closed-form-valuation-formula)

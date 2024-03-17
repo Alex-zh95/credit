@@ -35,5 +35,6 @@
 # Data files
 *.csv
 
-# Folders 
+# Artefacts
 .venv/*
+*DS_Store

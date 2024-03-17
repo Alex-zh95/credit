@@ -114,4 +114,21 @@ double get_returns_with_put(
     const double put,
     const double r
 );
+
+/* @Description:    Root solver via the secant method.
+ *
+ * @Params:         function& f:        Equation to solve for roots
+ *                  T& x0:              Initial guess for the function root
+ *                  F tol = 1e-3:       Tolerance level - stop if reached
+ *                  int n_iter = 50:    Maximum number of iterations before finishing
+ *
+ * @Returns:        T x:               Root solution
+ */
+template <typename Func, typename T>
+T secant_root(
+    Func f,
+    T& x0,
+    const double tol = 1e-3,
+    const int n_iter = 50
+);
 #endif

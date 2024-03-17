@@ -6,7 +6,7 @@
 #include <pybind11/stl.h>  // Needed for binding std::vector
 namespace py = pybind11;
 
-#include "risk_neutral.h"
+#include "risk_neutral.hpp"
 
 PYBIND11_MODULE(cpy_credit, m) {
     m.doc() = "Module containing procedures for structural credit models and capital determination.";

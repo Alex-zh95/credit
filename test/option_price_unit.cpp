@@ -8,7 +8,7 @@
 #include <math.h>
 #include <vector>
 
-#include "../source/risk_neutral.h"
+#include "../source/risk_neutral.hpp"
 
 double init = 100.0;
 double strike = 120.0;
