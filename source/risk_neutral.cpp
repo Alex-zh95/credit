@@ -15,10 +15,10 @@ using boost::math::normal;
 #endif
 
 template <typename Func, typename T>
-T secant_root(Func&& f, T& x0, T tol, int n_iter) {
+T secant_root(Func&& f, T x0, T tol, int n_iter) {
     // Define a neighborhood around the initial value x0
-    T x1 = x0/2;
-    T x2 = x0*2;
+    auto x1 = x0/2;
+    auto x2 = x0*2;
 
     for (auto iter = 0; iter < n_iter; ++iter) {
         x0 = (x1 * f(x2) - x2 * f(x1)) / (f(x2) - f(x1));
