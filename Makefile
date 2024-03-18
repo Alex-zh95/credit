@@ -7,7 +7,7 @@ UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S), Linux)
 	PYLINK_FLAGS := -fPIC
 else ifeq ($(UNAME_S), Darwin) # macOS
-	PYLINK_FLAGS := -undefined dynamic lookup
+	PYLINK_FLAGS := -undefined dynamic_lookup
 else
 	$(error Unspported OS: $(UNAME_S))
 endif
