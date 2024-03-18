@@ -1,12 +1,23 @@
 # Variables
 PYREQS := $(shell python3 -m pybind11 --includes)
 
+# Compiler flags dependent on underlying OS
+UNAME_S := $(shell uname -s)
+
+ifeq ($(UNAME_S), Linux)
+	PYLINK_FLAGS := -fPIC
+else ifeq ($(UNAME_S), Darwin) # macOS
+	PYLINK_FLAGS := -undefined dynamic lookup
+else
+	$(error Unspported OS: $(UNAME_S))
+endif
+
 # Commands to conduct builds of various tests and output libraries as needed.
 pymodule:
-	g++ -O3 -Wall -shared -std=c++20 -fPIC $(PYREQS) source/cpy_credit.cpp source/risk_neutral.cpp -o out/cpy_credit.so
+	g++ -O3 -Wall -shared -std=c++20 $(PYLINK_FLAGS) $(PYREQS) source/cpy_credit.cpp source/risk_neutral.cpp -o out/cpy_credit.so
 
 pytests:
-	g++ -Wall -shared -std=c++20 -fPIC $(PYREQS) source/cpy_credit.cpp source/risk_neutral.cpp -o out/cpy_credit.so -g
+	g++ -Wall -shared -std=c++20 $(PYLINK_FLAGS) $(PYREQS) source/cpy_credit.cpp source/risk_neutral.cpp -o out/cpy_credit.so -g
 
 pyinit:
 	mkdir -p .venv
