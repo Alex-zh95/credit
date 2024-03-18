@@ -15,19 +15,18 @@ using boost::math::normal;
 #define TOL 1e-6
 #endif
 
-void vanilla_option_price(
+std::tuple<double, double, double> vanilla_option_price(
     const double S0,
     const double K,
     const double r,
     const double sigma,
     const double t,
-    double& price,
-    double& Phi1,
-    double& Phi2,
     const bool call,
     const double q
 ) {
     double d1, d2;
+    double Phi1, Phi2;
+    double price = 0;
 
     // Define N(0,1) object
     normal N(0.0, 1.0);
@@ -46,6 +45,8 @@ void vanilla_option_price(
 
         price = K * exp(-r*t) * Phi2 - S0 * exp(-q*t) * Phi1;
     }
+
+    return {price, Phi1, Phi2};
 }
 
 std::vector<double> wang_transform(
@@ -80,18 +81,16 @@ double get_vanilla_asset_volatility(
     // Initialize guesses: A = E and sigma_a is the stdev of log returns
     std::vector<double> A = E;
 
-    double sigma_a = 0.5;
-    double prev_sigma_a;
+    auto sigma_a = 0.5;
 
     // Iterative steps
     for (unsigned int run_iter = 0; run_iter < n_iter; ++run_iter) {
         // Save down a previous result for sigma_a
-        prev_sigma_a = sigma_a; 
+        auto prev_sigma_a = sigma_a; 
 
         // update sigma_a with current asset value vector
         // From Itô Lemma, we have the following relationship: sigma_e * E[j] / A[j] = Phi1 * sigma_a
-        double eq, Phi1, Phi2;
-        vanilla_option_price(A[N-1], L, r, sigma_a, t, eq ,Phi1, Phi2);
+        auto [eq, Phi1, Phi2] = vanilla_option_price(A[N-1], L, r, sigma_a, t);
         sigma_a = sigma_e * E[N-1] / A[N-1] / Phi1;
 
         // Early stop if difference between previous and current sigma_iterations is below tolerance
@@ -100,11 +99,10 @@ double get_vanilla_asset_volatility(
 
         // Using this guess of sigma_a, calculate the implied asset values in vector
         for (unsigned int j = 0; j < N; ++j) {
-            double cur_equity = E[j];
+            auto cur_equity = E[j];
 
             auto fn = [&L, &r, &sigma_a, &t, &cur_equity](double _a) { 
-                double impl_equity, Phi1, Phi2;
-                vanilla_option_price(_a, L, r, sigma_a, t, impl_equity, Phi1, Phi2);
+                auto [impl_equity, Phi1, Phi2] = vanilla_option_price(_a, L, r, sigma_a, t);
                 return (cur_equity - impl_equity);
             };
 

@@ -4,6 +4,7 @@
  * @Description:     Declares functions for dealing with risk-neutral probability space.
  */
 #include <vector>
+#include <tuple>
 
 /* @Description:    Calculate the vanilla option price via the Black-Scholes equation, using the provided inputs:
  *
@@ -15,19 +16,17 @@
  *                  double q = 0:       Assumed constant and continuous dividend rate
  *                  bool call:          Whether looking at call or put, defaulted to true
  *
- * @Returns:        double& price       Price of option at time 0
- *                  double& Phi1        Delta of the option
- *                  double& Phi2        Risk-neutral probability that option is exercised
+ * @Returns:        std::tuple<double, double, double>, split into the following:
+ *                      double price       Price of option at time 0
+ *                      double Phi1        Delta of the option
+ *                      double Phi2        Risk-neutral probability that option is exercised
  */
-void vanilla_option_price(
+std::tuple<double, double, double> vanilla_option_price(
     const double S0,
     const double K,
     const double r,
     const double sigma,
     const double t,
-    double& price,
-    double& Phi1,
-    double& Phi2,
     const bool call = true,
     const double q = 0
 );
