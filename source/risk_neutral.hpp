@@ -54,7 +54,7 @@ std::vector<double> wang_transform(
  *                  double L:                   Face value of debt
  *                  double r:                   Risk-free rate of return
  *                  double t:                   Debt duration, defaulted to 1
- *                  uint n_iter:                Maximum number of iterations, defaulted to 50
+ *                  const n_iter:                Maximum number of iterations, defaulted to 50
  *
  * @Returns:        double sigma_a:             Asset volatility
  */
@@ -64,7 +64,7 @@ double get_vanilla_asset_volatility(
     const double L,
     const double r,
     const double t = 1,
-    unsigned int n_iter = 50
+    const int n_iter = 50
 );
 
 /* @Description:    Calculate risk-neutral probability of default.

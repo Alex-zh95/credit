@@ -26,7 +26,7 @@ std::tuple<double, double, double> vanilla_option_price(
 ) {
     double d1, d2;
     double Phi1, Phi2;
-    double price = 0;
+    double price = 0.0;
 
     // Define N(0,1) object
     normal N(0.0, 1.0);
@@ -69,14 +69,14 @@ double get_vanilla_asset_volatility(
     const double L,
     const double r,
     const double t,
-    unsigned int n_iter
+    const int n_iter
 ) {
     // Check the trivial case: if no leverage, asset and equity volatility equate
     if (L < TOL)
         return sigma_e;
 
     // Obtain some properties of the equity price vector
-    const unsigned int N = E.size();
+    auto N = E.size();
 
     // Initialize guesses: A = E and sigma_a is the stdev of log returns
     std::vector<double> A = E;
@@ -84,7 +84,7 @@ double get_vanilla_asset_volatility(
     auto sigma_a = 0.5;
 
     // Iterative steps
-    for (unsigned int run_iter = 0; run_iter < n_iter; ++run_iter) {
+    for (auto run_iter = 0; run_iter < n_iter; ++run_iter) {
         // Save down a previous result for sigma_a
         auto prev_sigma_a = sigma_a; 
 
@@ -98,7 +98,7 @@ double get_vanilla_asset_volatility(
             break;
 
         // Using this guess of sigma_a, calculate the implied asset values in vector
-        for (unsigned int j = 0; j < N; ++j) {
+        for (decltype(N) j = 0; j < N; ++j) {
             auto cur_equity = E[j];
 
             auto fn = [&L, &r, &sigma_a, &t, &cur_equity](double _a) { 
