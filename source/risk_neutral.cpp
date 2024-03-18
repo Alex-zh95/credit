@@ -8,36 +8,12 @@ using std::sqrt;
 #include <boost/math/distributions/normal.hpp>
 using boost::math::normal;
 
+#include "template_utils.hpp"
 #include "risk_neutral.hpp"
 
 #ifndef TOL
 #define TOL 1e-6
 #endif
-
-template <typename Func, typename T>
-T secant_root(Func&& f, T x0, T tol, int n_iter) {
-    // Define a neighborhood around the initial value x0
-    auto x1 = x0/2;
-    auto x2 = x0*2;
-
-    for (auto iter = 0; iter < n_iter; ++iter) {
-        x0 = (x1 * f(x2) - x2 * f(x1)) / (f(x2) - f(x1));
-        auto c = f(x0);
-
-        if ((c < tol) && (c > -tol))
-            break;
-
-        if (c < -tol) {
-            x1 = x2;
-            x2 = x0;
-        } else {
-            x2 = x1;
-            x1 = x0;
-        }
-    }
-
-    return x0;
-}
 
 void vanilla_option_price(
     const double S0,
