@@ -80,7 +80,6 @@ double get_vanilla_asset_volatility(
 
     // Initialize guesses: A = E and sigma_a is the stdev of log returns
     std::vector<double> A = E;
-
     auto sigma_a = 0.5;
 
     // Iterative steps
@@ -90,8 +89,8 @@ double get_vanilla_asset_volatility(
 
         // update sigma_a with current asset value vector
         // From Itô Lemma, we have the following relationship: sigma_e * E[j] / A[j] = Phi1 * sigma_a
-        auto [eq, Phi1, Phi2] = vanilla_option_price(A[N-1], L, r, sigma_a, t);
-        sigma_a = sigma_e * E[N-1] / A[N-1] / Phi1;
+        auto [eq, Phi1, Phi2] = vanilla_option_price(A.back(), L, r, sigma_a, t);
+        sigma_a = sigma_e * E.back() / A.back() / Phi1;
 
         // Early stop if difference between previous and current sigma_iterations is below tolerance
         if (abs(sigma_a - prev_sigma_a) < TOL)
