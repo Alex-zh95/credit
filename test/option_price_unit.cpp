@@ -16,9 +16,7 @@ double interest = 0.05;
 double volatility = 0.10;
 double duration = 0.75;
 
-double call_price, call_phi1, call_phi2;
 double dividend = 0.001;  // For the put only
-double put_price, put_phi1, put_phi2;
 
 // Values calculated in Python - we expect these to be returned.
 double expected_call_price = 0.18199750501184386;
@@ -32,7 +30,7 @@ double expected_put_Phi2 = 0.9576656456260665;
 int main() {
     std::cout << "Testing function risk_neutral::vanilla_option_price." << std::endl;
 
-    vanilla_option_price(init, strike, interest, volatility, duration, call_price, call_phi1, call_phi2);
+    auto [call_price, call_phi1, call_phi2] = vanilla_option_price(init, strike, interest, volatility, duration);
 
     std::cout << "Call price    =    " << call_price << std::endl;
     std::cout << "Phi1          =    " << call_phi1 << std::endl;
@@ -53,7 +51,7 @@ int main() {
     else
         std::cout << "Check Phi2!!\n";
 
-    vanilla_option_price(init, strike, interest, volatility, duration, put_price, put_phi1, put_phi2, false, dividend);
+    auto [put_price, put_phi1, put_phi2] = vanilla_option_price(init, strike, interest, volatility, duration, false, dividend);
     std::cout << "Put price     =   " << put_price << std::endl;
     std::cout << "Phi1          =    " << put_phi1 << std::endl;
     std::cout << "Phi2          =    " << put_phi2 << std::endl;
