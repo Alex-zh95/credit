@@ -1,0 +1,28 @@
+[project]
+name = "credit"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "chu", email = "zh.c.l.z.95@gmail.com"},
+]
+dependencies = [
+    "numpy",
+    "jupyter",
+    "yfinance",
+    "pyarrow",
+]
+requires-python = ">=3.9"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false
+
+[[tool.pdm.source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[tool.pdm.dev-dependencies]
+dev = []

@@ -11,4 +11,4 @@ $python_lib_dll = "$home_dir\AppData\Local\Programs\Python\Python312"
 $boost_lib_path = "$home_dir\boost_1_82_0"
 
 # Run the following command to compile
-Invoke-Expression "$compiler_path -O3 -Wall -shared -std=c++20 -fPIC -I$python_includes -I$pybind11_includes -I$boost_lib_path .\source\cpy_credit.cpp .\source\risk_neutral.cpp -o .\out\cpy_credit.pyd -L$python_lib_dll -lpython312 -static-libgcc -static-libstdc++"
+Invoke-Expression "$compiler_path -O3 -Wall -shared -std=c++20 -fPIC -I$python_includes -I$pybind11_includes -I$boost_lib_path .\src\credit\cpy_credit.cpp .\src\credit\risk_neutral.cpp -o .\out\cpy_credit.pyd -L$python_lib_dll -lpython312 -static-libgcc -static-libstdc++"

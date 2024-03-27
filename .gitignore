@@ -39,3 +39,4 @@
 # Artefacts
 .venv/*
 *DS_Store
+.pdm-python
