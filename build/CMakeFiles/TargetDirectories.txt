@@ -1,3 +1,0 @@
-/home/chu/Dokumente/Code/credit/build/CMakeFiles/cpy_credit.dir
-/home/chu/Dokumente/Code/credit/build/CMakeFiles/edit_cache.dir
-/home/chu/Dokumente/Code/credit/build/CMakeFiles/rebuild_cache.dir
