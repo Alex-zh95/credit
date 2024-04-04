@@ -24,9 +24,9 @@ import yfinance as yf
 import datetime as dt
 import numpy as np
 
-import cpy_credit as cc
+from build import cpy_credit as cc
 
-notebook_creation_date = dt.datetime(2024, 3, 15)
+notebook_creation_date = dt.datetime.today()
 
 financials = {
     'Net Premiums': 25.512,
