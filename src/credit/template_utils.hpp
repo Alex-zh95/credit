@@ -14,22 +14,27 @@
  * @Returns:        T x:                Root solution
  */
 template <typename Func, typename T>
-T secant_root(Func&& f, T x0, T tol = 1e-8, int n_iter = 50) {
+T secant_root(Func &&f, T x0, T tol = 1e-8, int n_iter = 50)
+{
     // Define a neighborhood around the initial value x0
-    auto x1 = x0/2;
-    auto x2 = x0*2;
+    auto x1 = x0 / 2;
+    auto x2 = x0 * 2;
 
-    for (auto iter = 0; iter < n_iter; ++iter) {
+    for (auto iter = 0; iter < n_iter; ++iter)
+    {
         x0 = (x1 * f(x2) - x2 * f(x1)) / (f(x2) - f(x1));
         auto c = f(x0);
 
         if ((c < tol) && (c > -tol))
             break;
 
-        if (c < -tol) {
+        if (c < -tol)
+        {
             x1 = x2;
             x2 = x0;
-        } else {
+        }
+        else
+        {
             x2 = x1;
             x1 = x0;
         }

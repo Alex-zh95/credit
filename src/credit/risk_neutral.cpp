@@ -22,8 +22,8 @@ std::tuple<double, double, double> vanilla_option_price(
     const double sigma,
     const double t,
     const bool call,
-    const double q
-) {
+    const double q)
+{
     double d1, d2;
     double Phi1, Phi2;
     double price = 0.0;
@@ -31,83 +31,104 @@ std::tuple<double, double, double> vanilla_option_price(
     // Define N(0,1) object
     normal N(0.0, 1.0);
 
-    d1 = (log(S0/K) + (r-q+0.5*pow(sigma, 2.0)) * t) / (sigma * sqrt(t));
+    d1 = (log(S0 / K) + (r - q + 0.5 * pow(sigma, 2.0)) * t) / (sigma * sqrt(t));
     d2 = d1 - sigma * sqrt(t);
 
-    if (call) {
+    if (call)
+    {
         Phi1 = cdf(N, d1);
         Phi2 = cdf(N, d2);
 
-        price = S0 * exp(-q*t) * Phi1 - K * exp(-r*t) * Phi2;
-    } else {        
+        price = S0 * exp(-q * t) * Phi1 - K * exp(-r * t) * Phi2;
+    }
+    else
+    {
         Phi1 = cdf(N, -d1);
         Phi2 = cdf(N, -d2);
 
-        price = K * exp(-r*t) * Phi2 - S0 * exp(-q*t) * Phi1;
+        price = K * exp(-r * t) * Phi2 - S0 * exp(-q * t) * Phi1;
     }
 
     return {price, Phi1, Phi2};
 }
 
+double fpt_call_price(
+    const double S0,
+    const double K,
+    const double r,
+    const double sigma,
+    const double t,
+    const double gamma,
+    const double q)
+{
+    normal N(0.0, 1.0);
+
+    if (S0 < K)
+        return 0.0;
+
+    auto Kt = K * exp(gamma * t);
+    auto lambda = (r - q + 0.5 * pow(sigma, 2)) / pow(sigma, 2);
+    auto y = log(Kt / S0) / (sigma * sqrt(t)) + lambda * sigma * sqrt(t);
+    auto x = log(S0 / Kt) / (sigma * sqrt(t)) + lambda * sigma * sqrt(t);
+
+    auto call = S0 * cdf(N, x) * exp(-q * t) - Kt * cdf(N, x - sigma * sqrt(t)) - S0 * exp(-q * t) * pow(Kt / S0, 2 * lambda) * cdf(N, y) + Kt * pow(Kt / S0, 2 * lambda - 2) * cdf(N, y - sigma * sqrt(t));
+
+    return call;
+}
+
 std::vector<double> wang_transform(
     std::vector<double> P,
     const double sharpe_ratio,
-    const bool inverse
-) {
+    const bool inverse)
+{
     // Define N(0,1) object
     normal N(0.0, 1.0);
 
-    for(auto& p : P) 
-    p = cdf(N, quantile(N, p) + (inverse?-1:1) * sharpe_ratio);
+    for (auto &p : P)
+        p = cdf(N, quantile(N, p) + (inverse ? -1 : 1) * sharpe_ratio);
 
     return P;
 }
 
-double get_vanilla_asset_volatility(
-    const std::vector<double> &E,
+double get_asset_volatility(
+    const double E,
     const double sigma_e,
     const double L,
     const double r,
     const double t,
-    const int n_iter
-) {
+    const int n_iter)
+{
     // Check the trivial case: if no leverage, asset and equity volatility equate
     if (L < TOL)
         return sigma_e;
 
-    // Obtain some properties of the equity price vector
-    auto N = E.size();
-
-    // Initialize guesses: A = E and sigma_a is the stdev of log returns
-    std::vector<double> A = E;
+    // Initial guesses
+    auto cur_asset = E;
     auto sigma_a = 0.5;
 
     // Iterative steps
-    for (auto run_iter = 0; run_iter < n_iter; ++run_iter) {
+    for (auto run_iter = 0; run_iter < n_iter; ++run_iter)
+    {
         // Save down a previous result for sigma_a
-        auto prev_sigma_a = sigma_a; 
+        auto prev_sigma_a = sigma_a;
 
-        // update sigma_a with current asset value vector
-        // From Itô Lemma, we have the following relationship: sigma_e * E[j] / A[j] = Phi1 * sigma_a
-        auto [eq, Phi1, Phi2] = vanilla_option_price(A.back(), L, r, sigma_a, t);
-        sigma_a = sigma_e * E.back() / A.back() / Phi1;
+        // Update sigma_a with current asset value vector
+        // From Itô Lemma, we have the following relationship: sigma_e * Equity / Asset = Phi1 * sigma_a
+        auto [eq, Phi1, Phi2] = vanilla_option_price(cur_asset, L, r, sigma_a, t);
+        sigma_a = sigma_e * E / cur_asset / Phi1;
 
         // Early stop if difference between previous and current sigma_iterations is below tolerance
         if (abs(sigma_a - prev_sigma_a) < TOL)
             break;
 
-        // Using this guess of sigma_a, calculate the implied asset values in vector
-        for (decltype(N) j = 0; j < N; ++j) {
-            auto cur_equity = E[j];
+        // Imply current asset value using current guess of sigma_a
+        auto fn = [&L, &r, &sigma_a, &t, &E](double _a)
+        {
+            auto [impl_equity, Phi1, Phi2] = vanilla_option_price(_a, L, r, sigma_a, t);
+            return (E - impl_equity);
+        };
 
-            auto fn = [&L, &r, &sigma_a, &t, &cur_equity](double _a) { 
-                auto [impl_equity, Phi1, Phi2] = vanilla_option_price(_a, L, r, sigma_a, t);
-                return (cur_equity - impl_equity);
-            };
-
-            // New root is the asset value
-            A[j] = secant_root(fn, cur_equity);
-        }
+        cur_asset = secant_root(fn, E);
     }
 
     return sigma_a;
@@ -118,36 +139,55 @@ double get_vanilla_default_probability(
     const double mu_a,
     const double sigma_a,
     const double L,
-    const double t
-) {
+    const double t)
+{
     normal N(0.0, 1.0);
 
     double distance_to_default = (log(a0 / L) + (mu_a - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
     return cdf(N, -distance_to_default);
 }
 
+double get_fpt_default_probability(
+    const double a0,
+    const double mu_a,
+    const double sigma_a,
+    const double L,
+    const double q,
+    const double gamma,
+    const double t)
+{
+    normal N(0.0, 1.0);
+
+    auto Lt = L * exp(gamma * t); // Default boundary via gamma growth rate at expiry
+
+    auto d1 = (log(a0) - log(Lt) + (mu_a - q - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
+    auto d2 = (-log(a0) - log(Lt) + (mu_a - q - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
+
+    return 1 - (cdf(N, d1) - pow(a0 / Lt, 1 - 2 * (mu_a - q - gamma) / pow(sigma_a, 2)) * cdf(N, d2));
+}
+
 double get_min_capital_ROL(
     const double y,
     const double p,
-    const double i
-) {
-    return ((1+y)*(1+p) - (1+i))/((1+i)*(1+y));
+    const double i)
+{
+    return ((1 + y) * (1 + p) - (1 + i)) / ((1 + i) * (1 + y));
 }
 
 double get_returns_with_put(
     const double y,
     const double y_var,
     const double put,
-    const double r
-) {
+    const double r)
+{
     // Determine historic investment mean return
-    const double sigma2_pt = log(1 + y_var/pow(y, 2));
+    const double sigma2_pt = log(1 + y_var / pow(y, 2));
     const double mu_pt = log(pow(y, 2) / sqrt(y_var + pow(y, 2)));
 
     // Determine the mean return with put protection
     normal norm(0.0, 1.0);
-    const double zeta = (log(1+r) - mu_pt) / sqrt(sigma2_pt);
-    double i_trunc = (1+r)*cdf(norm, zeta) + exp(mu_pt + sigma2_pt/2) - 1;
+    const double zeta = (log(1 + r) - mu_pt) / sqrt(sigma2_pt);
+    double i_trunc = (1 + r) * cdf(norm, zeta) + exp(mu_pt + sigma2_pt / 2) - 1;
 
     return i_trunc;
 }

@@ -28,9 +28,28 @@ std::tuple<double, double, double> vanilla_option_price(
     const double sigma,
     const double t,
     const bool call = true,
-    const double q = 0
-);
+    const double q = 0);
 
+/* @Description:    Calculate the down-and-out call option price via the Black-Scholes equation, using the provided inputs:
+ *
+ * @Params:         double S0:          Current price of underlying
+ *                  double K:           Strike price
+ *                  double r:           Risk-free interest rate
+ *                  double sigma:       Volatility of observed price
+ *                  double t:           Duration of the option (expiry)
+ *                  double gamma:       Growth rate of the strike price, defaulted to 0
+ *                  double q:           Dividend rate, defaulted to 0
+ *
+ * @Returns:        double price       Price of option at time 0
+ */
+double fpt_call_price(
+    const double S0,
+    const double K,
+    const double r,
+    const double sigma,
+    const double t = 1,
+    const double gamma = 0,
+    const double q = 0);
 /* @Description:    Converts a given actual probability vector into risk-adjusted probability.
  *                  The Wang Transform is one such method of doing so, and uses the Sharpe Ratio to do so.
  *
@@ -43,13 +62,12 @@ std::tuple<double, double, double> vanilla_option_price(
 std::vector<double> wang_transform(
     std::vector<double> P,
     const double sharpe_ratio,
-    const bool inverse = false
-);
+    const bool inverse = false);
 
-/* @Description:    Derive asset volatility via equity volatility numerically, using European vanilla call.
+/* @Description:    Derive asset volatility via equity volatility numerically.
  *                  Motivation for this is due to asset volatility not being observable.
  *
- * @Params:         std::vector<double> &E:     Vector of stock values
+ * @Params:         double E:                   Stock value
  *                  double sigma_e:             Equity volatility
  *                  double L:                   Face value of debt
  *                  double r:                   Risk-free rate of return
@@ -58,16 +76,15 @@ std::vector<double> wang_transform(
  *
  * @Returns:        double sigma_a:             Asset volatility
  */
-double get_vanilla_asset_volatility(
-    const std::vector<double> &E,
+double get_asset_volatility(
+    const double E,
     const double sigma_e,
     const double L,
     const double r,
     const double t = 1,
-    const int n_iter = 50
-);
+    const int n_iter = 50);
 
-/* @Description:    Calculate risk-neutral probability of default.
+/* @Description:    Calculate risk-neutral probability of default under Merton model.
  *
  * @Params:         double a0:              Current asset value
  *                  double mu_a:            Asset drift
@@ -82,8 +99,28 @@ double get_vanilla_default_probability(
     const double mu_a,
     const double sigma_a,
     const double L,
-    const double t = 1
-);
+    const double t = 1);
+
+/* @Description:    Calculate risk-neutral probability of default under First Passage Time model
+ *
+ * @Params:         double a0:              Current asset value
+ *                  double mu_a:            Asset drift
+ *                  double sigma_a:         Asset volatility
+ *                  double L:               Debt boundary value
+ *                  double q:               Dividend rate, defaulted to 0
+ *                  double gamma:           Debt growth rate, defaulted to 0
+ *                  double t:               Duration of debt, defaulted to 1
+ *
+ * @Returns:        double p_default:       Probability of default
+ */
+double get_fpt_default_probability(
+    const double a0,
+    const double mu_a,
+    const double sigma_a,
+    const double L,
+    const double q = 0,
+    const double gamma = 0,
+    const double t = 1);
 
 /* @Description:    Calculate minimum rate on line (ROL).
  *                  For the non-option method, set i=risk-free rate and p=0.
@@ -97,8 +134,7 @@ double get_vanilla_default_probability(
 double get_min_capital_ROL(
     const double y,
     const double p,
-    const double i
-);
+    const double i);
 
 /* @Description:        Calculate returns on investment with purchase of put option.
  *
@@ -111,7 +147,6 @@ double get_returns_with_put(
     const double y,
     const double y_var,
     const double put,
-    const double r
-);
+    const double r);
 
 #endif

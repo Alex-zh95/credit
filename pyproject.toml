@@ -10,6 +10,9 @@ dependencies = [
     "jupyter",
     "yfinance",
     "pyarrow",
+    "scipy",
+    "matplotlib",
+    "seaborn",
 ]
 requires-python = ">=3.9"
 readme = "README.md"

@@ -12,8 +12,8 @@ PYBIND11_MODULE(cpy_credit, m) {
     m.doc() = "Module containing procedures for structural credit models and capital determination.";
 
     m.def(
-        "get_vanilla_asset_volatility",
-        &get_vanilla_asset_volatility,
+        "get_asset_volatility",
+        &get_asset_volatility,
         "Numerically derive asset volatility given debt and equity",
         py::arg("E"), py::arg("sigma_e"), py::arg("L"), py::arg("r"), py::arg("t") = 1, py::arg("n_iter") = 50
     );
@@ -21,8 +21,15 @@ PYBIND11_MODULE(cpy_credit, m) {
     m.def(
         "get_vanilla_default_probability",
         &get_vanilla_default_probability,
-        "Attain risk-neutral default probability",
+        "Attain risk-neutral default probability (Merton)",
         py::arg("a0"), py::arg("mu_a"), py::arg("sigma_a"), py::arg("L"), py::arg("t") = 1
+    );
+
+    m.def(
+        "get_fpt_default_probability",
+        &get_fpt_default_probability,
+        "Attain risk-neutral default probability (Rirst Passage Time)",
+        py::arg("a0"), py::arg("mu_a"), py::arg("sigma_a"), py::arg("L"), py::arg("delta") = 0, py::arg("gamma") = 0, py::arg("t") = 1
     );
 
     m.def(

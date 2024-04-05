@@ -45,14 +45,14 @@ financials = {
 drift = financials['ROE']
 print(f'Growth parameter assumed:               {drift:,.3%}')
 
-rf = 4.75 / 100  # 52-week U.S. T-bill discount rate
+rf = 5.50 / 100  # 52-week U.S. T-bill discount rate
 print(f'U.S. T-bill (risk-free) rate:           {rf:,.3%}')
 
 # Projected interest payout
-capital = financials['Net Premiums'] * (1 + drift) + financials['Net Investment Income'] * (1 + rf)
+insurance_assets = financials['Net Premiums'] * (1 + drift) + financials['Net Investment Income'] * (1 + rf)
 reserve = (financials['Losses'] + financials['Other Expenses']) * (1 + drift)
 
-print(f'Total capital:                          {capital:,.3f}')
+print(f'Total assets:                           {insurance_assets:,.3f}')
 print(f'Total reserve:                          {reserve:,.3f}')
 
 # %% [markdown]
@@ -103,13 +103,15 @@ equity_volatility = select_equity_volatility(ticker, equity[-1], dt.datetime(
     notebook_creation_date.day,
 ))
 
-print(f'Implied equity volatility from option:  {equity_volatility:,.3%}')
+equity_volatility = 0.15
+
+print(f'Implied equity volatility from option:  {equity_volatility:,.5%}')
 
 # Attempt to calculate asset volatility if it fails, fall back to equity volatility.
 try:
-    asset_volatility = cc.get_vanilla_asset_volatility(equity, equity_volatility, reserve, rf)
-    print(f'Implied asset volatility:               {asset_volatility:,.3%}')
-except RuntimeError:
+    asset_volatility = cc.get_asset_volatility(equity[-1], equity_volatility, reserve, rf)
+    print(f'Implied asset volatility:               {asset_volatility:,.5%}')
+except ValueError:
     print("No convergence to asset volatility. Using equity volatility as proxy...")
     asset_volatility = equity_volatility
 
@@ -126,13 +128,50 @@ except RuntimeError:
 
 # %%
 q = cc.get_vanilla_default_probability(
-    capital,
+    insurance_assets,
     drift,
     asset_volatility,
     reserve
 )
 
-print(f'Default probability:                    {q:,.3%}')
+print(f'Default probability:                    {q:,.5%}')
 
 rol = np.exp(-rf) * q
-print(f'Implied rate on line:                   {rol:,.3%}')
+print(f'Implied rate on line:                   {rol:,.5%}')
+
+# %% [markdown]
+# ## Alternative modeling
+# 
+# Merton model has some limitations. First is that reinsurance trigger can only occur at maturity of the "call" option, which is not as realistic. To remedy this, replace the underlying European vanilla call option assumed by a barrier down-and-out call option. This better models the possibility of reinsurance trigger occurring any time prior to expiry, leaving no more cover afterwards.
+#
+# If we use the same parameters as for the above Merton example, we should get the same default probability. This is due to the barrier being the same as the the reserve (i.e. strike) and that because the "equity", i.e. the capital valued this way is the same. More rigorously, for a down-and-out call $c_do$ and down-and-in call $c_di$, we have that an analogously calculated European vanilla call $c = c_{do} + c_{di}$.
+
+#%%
+q_fpt = cc.get_fpt_default_probability(
+    insurance_assets,
+    drift,
+    asset_volatility,
+    reserve,
+)
+print(f'Default probability:                    {q_fpt:,.5%}')
+
+rol_fpt = np.exp(-rf) * q_fpt
+print(f'Implied rate on line:                   {rol_fpt:,.5%}')
+# %% [markdown]
+#
+# However the FPT model allows for more flexibility with the barrier itself, i.e. a moving barrier following a constant rate $\gamma$. In this example, set $\gamma = r$, risk-free rate. This should yield a higher probability of default as the barrier of default rises over time.
+#
+# An alternative is to set $\gamma$ to be the average development for long-tail business. E.g. if average claim development times followed an $\text{Exp}(\alpha)$ distribution, we could set $\gamma = 1/\alpha$.
+
+#%%
+q_fpt = cc.get_fpt_default_probability(
+    insurance_assets,
+    drift,
+    asset_volatility,
+    reserve,
+    gamma = rf
+)
+print(f'Modified default probability:           {q_fpt:,.5%}')
+
+rol_fpt = np.exp(-rf) * q_fpt
+print(f'Modified implied rate on line:          {rol_fpt:,.5%}')
