@@ -40,9 +40,12 @@ std::tuple<double, double, double> vanilla_option_price(
  *                  double gamma:       Growth rate of the strike price, defaulted to 0
  *                  double q:           Dividend rate, defaulted to 0
  *
- * @Returns:        double price       Price of option at time 0
+ * @Returns:        std::tuple<double, double>, split into the following:
+ *
+ *                      double c_do:    Price of down-and-out call at time 0
+ *                      double c_di:    Price of down-and-in call at time 0
  */
-double fpt_call_price(
+std::tuple<double, double> fpt_call_price(
     const double S0,
     const double K,
     const double r,
@@ -50,6 +53,7 @@ double fpt_call_price(
     const double t = 1,
     const double gamma = 0,
     const double q = 0);
+
 /* @Description:    Converts a given actual probability vector into risk-adjusted probability.
  *                  The Wang Transform is one such method of doing so, and uses the Sharpe Ratio to do so.
  *

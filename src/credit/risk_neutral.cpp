@@ -52,7 +52,7 @@ std::tuple<double, double, double> vanilla_option_price(
     return {price, Phi1, Phi2};
 }
 
-double fpt_call_price(
+std::tuple<double, double> fpt_call_price(
     const double S0,
     const double K,
     const double r,
@@ -64,16 +64,21 @@ double fpt_call_price(
     normal N(0.0, 1.0);
 
     if (S0 < K)
-        return 0.0;
+        return {0.0, 0.0};
 
     auto Kt = K * exp(gamma * t);
     auto lambda = (r - q + 0.5 * pow(sigma, 2)) / pow(sigma, 2);
     auto y = log(Kt / S0) / (sigma * sqrt(t)) + lambda * sigma * sqrt(t);
     auto x = log(S0 / Kt) / (sigma * sqrt(t)) + lambda * sigma * sqrt(t);
 
-    auto call = S0 * cdf(N, x) * exp(-q * t) - Kt * cdf(N, x - sigma * sqrt(t)) - S0 * exp(-q * t) * pow(Kt / S0, 2 * lambda) * cdf(N, y) + Kt * pow(Kt / S0, 2 * lambda - 2) * cdf(N, y - sigma * sqrt(t));
+    auto c_do = S0 * cdf(N, x) * exp(-q * t) - Kt * cdf(N, x - sigma * sqrt(t)) - S0 * exp(-q * t) * pow(Kt / S0, 2 * lambda) * cdf(N, y) + Kt * pow(Kt / S0, 2 * lambda - 2) * cdf(N, y - sigma * sqrt(t));
 
-    return call;
+    // Exploiting the fact that a standard call can be decomposed
+    // into sum of down-and-out and down-and-in calls
+    auto [c, Phi1, Phi2] = vanilla_option_price(S0, K, r, sigma, t, true, q);
+    auto c_di = c - c_do;
+
+    return {c_do, c_di};
 }
 
 std::vector<double> wang_transform(
