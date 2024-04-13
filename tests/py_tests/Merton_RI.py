@@ -24,6 +24,7 @@ import yfinance as yf
 import datetime as dt
 import numpy as np
 
+# import utils
 from build import cpy_credit as cc
 
 notebook_creation_date = dt.datetime.today()
@@ -55,6 +56,8 @@ reserve = (financials['Losses'] + financials['Other Expenses']) * (1 + drift)
 print(f'Total assets:                           {insurance_assets:,.3f}')
 print(f'Total reserve:                          {reserve:,.3f}')
 
+equity_volatility = 0.15  # Freeze the volatility found from yfinance
+
 # %% [markdown]
 # ## Volatility
 #
@@ -69,41 +72,16 @@ equity = ticker.history(
     end=notebook_creation_date,
 )['Close'].values
 
+
 print(f'Current price (close):                  {equity[-1]:,.2f}')
 
+# Look for the option closest to this price with expiry arround 1 year's time, taking average volatilities - if we want most up-to-date
+# equity_volatility = select_equity_volatility(ticker, equity[-1], dt.datetime(
+#     notebook_creation_date.year + 1,
+#     notebook_creation_date.month,
+#     notebook_creation_date.day,
+# ))
 
-def select_equity_volatility(ticker, equity_price_today, end_date) -> float:
-    expiry_dates = ticker.options
-
-    options = pd.DataFrame()
-
-    # Obtain all the put options
-    for T in expiry_dates:
-        cur_T_options = ticker.option_chain(T)
-        options = pd.concat([options, cur_T_options.puts], ignore_index=True)
-        options['expiry'] = T
-
-    # Odd issue that yields wrong expiration dates so add 1 day to correct
-    options['expiry'] = pd.to_datetime(options['expiry']) + dt.timedelta(days=1)
-    options['duration'] = np.abs(((options['expiry']) - end_date).dt.days / 365)
-
-    # Also look for only those options in the money
-    options['strike'] = options['strike'].apply(pd.to_numeric)
-    options = options[options['strike'] >= equity_price_today]
-
-    # After sorting, return the average of the top 5 options
-    options = options.sort_values(by=['duration', 'strike'], ascending=True)
-    return np.mean(options['impliedVolatility'].iloc[:5])
-
-
-# Look for the option closest to this price with expiry arround 1 year's time, taking average volatilities
-equity_volatility = select_equity_volatility(ticker, equity[-1], dt.datetime(
-    notebook_creation_date.year + 1,
-    notebook_creation_date.month,
-    notebook_creation_date.day,
-))
-
-equity_volatility = 0.15
 
 print(f'Implied equity volatility from option:  {equity_volatility:,.5%}')
 
