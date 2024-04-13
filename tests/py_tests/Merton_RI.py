@@ -119,12 +119,12 @@ print(f'Implied rate on line:                   {rol:,.5%}')
 
 # %% [markdown]
 # ## Alternative modeling
-# 
+#
 # Merton model has some limitations. First is that reinsurance trigger can only occur at maturity of the "call" option, which is not as realistic. To remedy this, replace the underlying European vanilla call option assumed by a barrier down-and-out call option. This better models the possibility of reinsurance trigger occurring any time prior to expiry, leaving no more cover afterwards.
 #
 # If we use the same parameters as for the above Merton example, we should get the same default probability. This is due to the barrier being the same as the the reserve (i.e. strike) and that because the "equity", i.e. the capital valued this way is the same. More rigorously, for a down-and-out call $c_do$ and down-and-in call $c_di$, we have that an analogously calculated European vanilla call $c = c_{do} + c_{di}$.
 
-#%%
+# %%
 q_fpt = cc.get_fpt_default_probability(
     insurance_assets,
     drift,
@@ -141,13 +141,13 @@ print(f'Implied rate on line:                   {rol_fpt:,.5%}')
 #
 # An alternative is to set $\gamma$ to be the average development for long-tail business. E.g. if average claim development times followed an $\text{Exp}(\alpha)$ distribution, we could set $\gamma = 1/\alpha$.
 
-#%%
+# %%
 q_fpt = cc.get_fpt_default_probability(
     insurance_assets,
     drift,
     asset_volatility,
     reserve,
-    gamma = rf
+    gamma=rf
 )
 print(f'Modified default probability:           {q_fpt:,.5%}')
 
