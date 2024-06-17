@@ -7,7 +7,7 @@
 
 #include <boost/math/distributions.hpp>
 using boost::math::normal;
-#include "../source/risk_neutral.hpp"
+#include "../../src/credit/risk_neutral.hpp"
 
 template <class T>
 int array_size(T& arr) {

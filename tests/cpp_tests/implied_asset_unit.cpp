@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-#include "../source/risk_neutral.hpp"
+#include "../../src/credit/risk_neutral.hpp"
 #include <cmath>
 
 std::vector<double> m_equity = {
@@ -65,11 +65,11 @@ const double expected_asset_vol = 12.787/100;
 int main() {
     std::cout << "Testing get_asset_volatility...\n";
     std::cout << "Expected asset volatility:        " << expected_asset_vol << "\n";
-    double asset_vol = get_vanilla_asset_volatility(m_equity, implied_equity_vol, reserve, rf);
+    double asset_vol = get_asset_volatility(m_equity, implied_equity_vol, reserve, rf);
     std::cout << "Actual asset volatility:          " << asset_vol << "\n";
 
-    std::cout << "Test result?                      " << 
-        ((std::abs(asset_vol - expected_asset_vol) < 1e-3)?"Pass":"Fail") << 
+    std::cout << "Test result?                      " <<
+        ((std::abs(asset_vol - expected_asset_vol) < 1e-3)?"Pass":"Fail") <<
         std::endl;
 
     return 0;

@@ -7,7 +7,7 @@
 #include <cmath>
 using std::cout;
 
-#include "../source/template_utils.hpp"
+#include "../../src/credit/template_utils.hpp"
 
 auto f(double x) -> double {
     return (3 * x * x + 2 * x - 8);

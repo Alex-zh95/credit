@@ -6,7 +6,7 @@ using std::cout;
 #include <boost/math/tools/roots.hpp>
 using boost::math::tools::bisect;
 
-#include "../source/risk_neutral.hpp"
+#include "../../src/credit/risk_neutral.hpp"
 
 #ifndef TOL
 #define TOL 1e-3
@@ -20,7 +20,7 @@ int main() {
 
     // Corresponding put option rate from market corresponding to above
     const double put_price = 29.90 / 406.56;
-    const double growth_variance = 0.2030; // Implied volatility from chosen option 
+    const double growth_variance = 0.2030; // Implied volatility from chosen option
 
     cout << "Testing ROL calculations...with put option.\n";
     cout << "Put strike:            " << put_strike*100 << "%\n";
