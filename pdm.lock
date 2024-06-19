@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:9a48f3f8c2479d06ba2ccf93cf49352ff22881c6aab9df9d049246fa5b05c2f5"
+content_hash = "sha256:edf579562e38a92221ca451b5a4e01ed2b697774e43598ff5f41498cdd3d2efa"
 
 [[package]]
 name = "anyio"
@@ -1817,6 +1817,17 @@ files = [
     {file = "pyarrow-15.0.2-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:8bd2baa5fe531571847983f36a30ddbf65261ef23e496862ece83bdceb70420d"},
     {file = "pyarrow-15.0.2-cp39-cp39-win_amd64.whl", hash = "sha256:6669799a1d4ca9da9c7e06ef48368320f5856f36f9a4dd31a11839dda3f6cc8c"},
     {file = "pyarrow-15.0.2.tar.gz", hash = "sha256:9c9bc803cb3b7bfacc1e96ffbfd923601065d9d3f911179d81e72d99fd74a3d9"},
+]
+
+[[package]]
+name = "pybind11"
+version = "2.12.0"
+requires_python = ">=3.6"
+summary = "Seamless operability between C++11 and Python"
+groups = ["default"]
+files = [
+    {file = "pybind11-2.12.0-py3-none-any.whl", hash = "sha256:df8d60b94f9e714d81013db233393d430ebf9f3551642b82291cf1b14d1afdbd"},
+    {file = "pybind11-2.12.0.tar.gz", hash = "sha256:5e3c557a84b06b969247630407fc4d985bed157b4253b13153b8e8e165e0c3dc"},
 ]
 
 [[package]]

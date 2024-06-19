@@ -13,6 +13,7 @@ dependencies = [
     "scipy",
     "matplotlib",
     "seaborn",
+    "pybind11>=2.12.0",
 ]
 requires-python = ">=3.9"
 readme = "README.md"
