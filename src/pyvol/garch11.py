@@ -1,10 +1,12 @@
 """
 @Filename:      garch11.py
 @Description:   Script used for fitting a GARCH(1,1) model to imply volatility.
+
+NOTE: Add a residuals checker as a diagnostic for GoF (e.g. resiudals should follow a N(0,1) distribution - use various tests of normality to verify this).
 """
 
 import numpy as np
-from arch import arch_model
+import arch
 
 
 class GarchVol:
@@ -24,6 +26,16 @@ class GarchVol:
         self._sigmdl = None
         self._sigvar = np.zeros(X.shape - 1)
         self._nu = 0.0
+
+    def _reforecast(self, horizon: int = 1) -> arch.ARCHModelForecast:
+        '''
+        Private fn: Perform forecast using _sigmdl but with custom horizon.
+
+        Returns a forecast object for further use.
+        '''
+        if self._sigmdl is None:
+            raise ValueError('_sigmdl not yet defined. Run method fit_garch at least once to initiate.')
+        return self._sigmdl.forecast(horizon=horizon)
 
     def _log_rts(self) -> None:
         '''
@@ -45,15 +57,15 @@ class GarchVol:
         @Returns:   None
         '''
         dlogX = self._dlogX[start:end]
-        am = arch_model(dlogX, vol='GARCH', p=1, q=1, dist="normal")
+        am = arch.arch_model(dlogX, vol='GARCH', p=1, q=1, dist="normal")
 
         # Store handle to model
         self._sigmdl = am.fit(update_freq=5)  # Limit the stdout to every 5 iterations
 
         # Store results (1-step ahead)
-        forecasts = self._sigmdl.forecast(horizon=1)
-        self._sigma = forecasts.variance.values[-1, :]
-        self._nu = forecasts.mean.values[-1, :]
+        forecasts = self._reforecast(horizon=1)
+        self._nu = forecasts.variance.values[-1, :]
+        self._vol_mean = forecasts.mean.values[-1, :]
 
     @property
     def X(self) -> np.ndarray:
@@ -81,3 +93,13 @@ class GarchVol:
             self._log_rts()
 
         return self._sigma
+
+    @property
+    def nu(self) -> float:
+        '''
+        Return the volatility of the volatility (i.e. volatility of sigma).
+        '''
+        if self.nu == 0.0:
+            raise Warning('Nu = 0. Possibly undefined.')
+
+        return self.nu
