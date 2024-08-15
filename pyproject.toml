@@ -14,6 +14,7 @@ dependencies = [
     "matplotlib",
     "seaborn",
     "pybind11>=2.12.0",
+    "arch>=7.0.0",
 ]
 requires-python = ">=3.9"
 readme = "README.md"
