@@ -1,5 +1,5 @@
 /* @Filename:       cpy_credit.cpp
- * @Desrciption:    Implement exports for various functions within risk_neutral.h for Python interface.
+ * @Description:    Implement exports for various functions within risk_neutral.h for Python interface.
  */
 
 #include <pybind11/pybind11.h>
@@ -22,14 +22,14 @@ PYBIND11_MODULE(cpy_credit, m) {
         "get_vanilla_default_probability",
         &get_vanilla_default_probability,
         "Attain risk-neutral default probability (Merton)",
-        py::arg("a0"), py::arg("mu_a"), py::arg("sigma_a"), py::arg("L"), py::arg("t") = 1
+        py::arg("a0"), py::arg("rf"), py::arg("sigma_a"), py::arg("L"), py::arg("t") = 1
     );
 
     m.def(
         "get_fpt_default_probability",
         &get_fpt_default_probability,
-        "Attain risk-neutral default probability (Rirst Passage Time)",
-        py::arg("a0"), py::arg("mu_a"), py::arg("sigma_a"), py::arg("L"), py::arg("delta") = 0, py::arg("gamma") = 0, py::arg("t") = 1
+        "Attain risk-neutral default probability (First Passage Time).",
+        py::arg("a0"), py::arg("rf"), py::arg("sigma_a"), py::arg("L"), py::arg("delta") = 0, py::arg("gamma") = 0, py::arg("t") = 1
     );
 
     m.def(

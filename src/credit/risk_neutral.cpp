@@ -141,20 +141,20 @@ double get_asset_volatility(
 
 double get_vanilla_default_probability(
     const double a0,
-    const double mu_a,
+    const double rf,
     const double sigma_a,
     const double L,
     const double t)
 {
     normal N(0.0, 1.0);
 
-    double distance_to_default = (log(a0 / L) + (mu_a - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
+    double distance_to_default = (log(a0 / L) + (rf - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
     return cdf(N, -distance_to_default);
 }
 
 double get_fpt_default_probability(
     const double a0,
-    const double mu_a,
+    const double rf,
     const double sigma_a,
     const double L,
     const double q,
@@ -165,10 +165,10 @@ double get_fpt_default_probability(
 
     auto Lt = L * exp(gamma * t); // Default boundary via gamma growth rate at expiry
 
-    auto d1 = (log(a0) - log(Lt) + (mu_a - q - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
-    auto d2 = (-log(a0) - log(Lt) + (mu_a - q - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
+    auto d1 = (log(a0) - log(Lt) + (rf - q - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
+    auto d2 = (-log(a0) - log(Lt) + (rf - q - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
 
-    return 1 - (cdf(N, d1) - pow(a0 / Lt, 1 - 2 * (mu_a - q - gamma) / pow(sigma_a, 2)) * cdf(N, d2));
+    return 1 - (cdf(N, d1) - pow(a0 / Lt, 1 - 2 * (rf - q - gamma) / pow(sigma_a, 2)) * cdf(N, d2));
 }
 
 double get_min_capital_ROL(

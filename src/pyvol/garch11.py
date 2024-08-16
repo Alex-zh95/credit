@@ -17,7 +17,7 @@ class GarchVol:
     Note attributes are in % form (i.e. sigma=3.5 means 3.5%)
 
     @attributes:    sigma:  float:              empirical or garch-estimated volatility of return
-                    mu:     float:              empirical or garch-estiamted mean return
+                    mu:     float:              empirical or garch-estimated mean return
     '''
 
     def __init__(self, X: np.ndarray):
@@ -75,7 +75,7 @@ class GarchVol:
         # Store handle to model
         self._sigmdl = am.fit()
 
-        # Store results (for whole trading yeear)
+        # Store results (for whole trading year)
         forecasts = self._reforecast(horizon=h)
         self._sigma = np.sqrt(forecasts.variance.values[-1, :])
         self._mu = forecasts.mean.values[-1, :]

@@ -10,7 +10,7 @@
  *
  * @Params:         double S0:          Current price of underlying
  *                  double K:           Strike price
- *                  double r:           Risk-free interest rate
+ *                  double rf     Risk-free interest rate
  *                  double sigma:       Volatility of observed price
  *                  double t:           Duration of the option (expiry)
  *                  double q = 0:       Assumed constant and continuous dividend rate
@@ -91,7 +91,7 @@ double get_asset_volatility(
 /* @Description:    Calculate risk-neutral probability of default under Merton model.
  *
  * @Params:         double a0:              Current asset value
- *                  double mu_a:            Asset drift
+ *                  double rf:              Asset drift
  *                  double sigma_a:         Asset volatility
  *                  double L:               Debt face value
  *                  double t:               Duration of debt, defaulted to 1
@@ -100,7 +100,7 @@ double get_asset_volatility(
  */
 double get_vanilla_default_probability(
     const double a0,
-    const double mu_a,
+    const double rf,
     const double sigma_a,
     const double L,
     const double t = 1);
@@ -108,7 +108,7 @@ double get_vanilla_default_probability(
 /* @Description:    Calculate risk-neutral probability of default under First Passage Time model
  *
  * @Params:         double a0:              Current asset value
- *                  double mu_a:            Asset drift
+ *                  double rf:              Asset drift
  *                  double sigma_a:         Asset volatility
  *                  double L:               Debt boundary value
  *                  double q:               Dividend rate, defaulted to 0
@@ -119,7 +119,7 @@ double get_vanilla_default_probability(
  */
 double get_fpt_default_probability(
     const double a0,
-    const double mu_a,
+    const double rf,
     const double sigma_a,
     const double L,
     const double q = 0,
