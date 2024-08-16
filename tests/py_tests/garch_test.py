@@ -11,11 +11,14 @@ now = datetime.today()
 clip = datetime(now.year - 1, now.month, now.day)
 
 # Assumptions
+# tick_name = 'ACGL'
+tick_name = 'AXAHY'
+TRADING_DAYS = 252
 rf = 0.045  # Risk-free rate
-inf = 0.03  # Inflation
+infl = 0.03  # Inflation
 
-print('AIG equity data...')
-ticker = yf.Ticker('AIG')
+print(f'Loading {tick_name} equity data...')
+ticker = yf.Ticker(tick_name)
 df = ticker.history(start=clip, end=now)
 df.head()
 
@@ -39,29 +42,30 @@ test = mdl.diagnostics()
 print(f'p-val:   {test[-1]}')
 
 # Convert the stats to annual
-TRADING_DAYS = 252
 vol = fit_sig * np.sqrt(TRADING_DAYS) / 100  # Use correct decimalization
+drft = fit_mu * TRADING_DAYS / 100
 print(f'\nAnnual volatility: {vol:,.3%}')
+print(f'Annual drift:      {drft:,.3%}')
 
 # For a basic FPT model, we analyze total revenue and total expense (we should in theory use NEP and Total Loss Adj. Expenses (Claims) but cannot programmatically obtain with yfinance)
 income = ticker.financials.loc['Total Revenue'].iloc[0] / 1e9
 outgo = ticker.financials.loc['Total Expenses'].iloc[0] / 1e9
 
 print(f'\nTotal income (bns):    {income:.3f}')
-print(f'Total outgo (bns):    {outgo:.3f}')
-print(f'Combined ratio:       {outgo / income:,.3%}')
+print(f'Total outgo (bns):     {outgo:.3f}')
+print(f'Combined ratio:        {outgo / income:,.3%}')
 
 print('\nUsing the First-Passage Time model, calculate risk-neutral reinsurance default rate...')
 
 asset_sig = cc.get_asset_volatility(income, vol, outgo, rf)
 print(f'Obtain implied asset volatility: {asset_sig:,.3%}')
 
-rn_rol = cc.get_fpt_default_probability(a0=income, rf=rf, sigma_a=asset_sig, L=outgo, gamma=inf)
-print(f'Risk-neutral ROL:    {rn_rol:,.3%}')
+rn_rol = cc.get_fpt_default_probability(a0=income, rf=rf, sigma_a=asset_sig, L=outgo, gamma=infl)
+print(f'Risk-neutral ROL:      {rn_rol:,.3%}')
 
 # Risk-adjust via the Wang transform
-rol = cc.wang_transform([rn_rol], sharpe_ratio=-fit_mu * TRADING_DAYS / 100)[0]
+rol = cc.wang_transform([rn_rol], sharpe_ratio=-drft)[0]
 
 # Now attain present value of rol
 rol *= np.exp(-rf)
-print(f'Risk-adj. ROL:     {rol:,.3%}')
+print(f'Risk-adj. ROL:         {rol:,.3%}')
