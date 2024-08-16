@@ -11,8 +11,7 @@ now = datetime.today()
 clip = datetime(now.year - 1, now.month, now.day)
 
 # Assumptions
-# tick_name = 'ACGL'
-tick_name = 'AXAHY'
+tick_name = 'ACGL'
 TRADING_DAYS = 252
 rf = 0.045  # Risk-free rate
 infl = 0.03  # Inflation
