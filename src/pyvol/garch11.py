@@ -1,33 +1,43 @@
 """
 @Filename:      garch11.py
-@Description:   Script used for fitting a GARCH(1,1) model to imply volatility.
-
-NOTE: Add a residuals checker as a diagnostic for GoF (e.g. resiudals should follow a N(0,1) distribution - use various tests of normality to verify this).
+@Description:   Script used for fitting a GARCH(1,1) model to imply volatility. This method is more useful if there are no implied volatility data available.
 """
 
 import numpy as np
 import arch
+from scipy import stats
+
+from typing import Tuple
 
 
 class GarchVol:
+    '''
+    Encapsulate instrument ticker information and accompanying modeling statistics pertaining to volatility.
+
+    Note attributes are in % form (i.e. sigma=3.5 means 3.5%)
+
+    @attributes:    sigma:  float:              empirical or garch-estimated volatility of return
+                    mu:     float:              empirical or garch-estiamted mean return
+    '''
+
     def __init__(self, X: np.ndarray):
         '''
-        Encapsulate instrument ticker information and accompanying modeling statistics pertaining to volatility.
+        Initialize the model.
 
-        @Params:    X: np.ndarray:      Vector of ticker information to store
-        @Returns:   None
+        @params:        x:      np.ndarray:         vector of ticker information to store
         '''
         self._X = X
         self._dlogX = np.zeros(X.shape)
         self._mu = 0.0
         self._sigma = 0.0
 
-        # Parameters for volatility model
+        # Store volatility model in this param
         self._sigmdl = None
-        self._sigvar = np.zeros(X.shape - 1)
-        self._nu = 0.0
 
-    def _reforecast(self, horizon: int = 1) -> arch.ARCHModelForecast:
+        # Residual variances - we run diagnostics here
+        self._epsilons = np.zeros(X.shape[0] - 1)
+
+    def _reforecast(self, horizon: int = 1):  # -> arch.ARCHModelForecast:
         '''
         Private fn: Perform forecast using _sigmdl but with custom horizon.
 
@@ -41,31 +51,49 @@ class GarchVol:
         '''
         Private fn: Calculate the log returns for the underlying values and store the mean and volatilities.
         '''
-        self._dX = np.diff(np.log(self._X))
-        self._mu = np.mean(self._dX)
-        self._sigma = np.std(self._dX)
 
-    def fit_garch(self, start: int = 0, end: int = 0, p: int = 1, q: int = 1) -> None:
+        # arch documentation recommends scaling to int percentages
+        self._dlogX = np.diff(np.log(self._X)) * 100
+        self._mu = np.mean(self._dlogX)
+        self._sigma = np.std(self._dlogX)
+
+    def fit_garch(self, start: int = 0, end: int = 0, p: int = 1, q: int = 1, h: int = 252) -> None:
         '''
         Fit the GARCH(p,q) model to the underlying return data.
 
         @Params:    start:  int = 0:      Clip the start of the vector (no start clip by default)
-                    end:    int = -1:     Clip the end of the vector (no end clip by default)
+                    end:    int = 0:      Clip the end of the vector (no end clip by default)
                     p:      int = 1:      ARCH p parameter (i.e. the AR(p) for underlying variance)
                     q:      int = 1:      GARCH q parameter (i.e. the MA(q) for underlying variance)
+                    h:      int = 252:    Horizon for projection (trading year default)
 
         @Returns:   None
         '''
-        dlogX = self._dlogX[start:end]
+        dlogX = self._dlogX[start:len(self._dlogX)] if end == 0 else self._dlogX[start:end]
         am = arch.arch_model(dlogX, vol='GARCH', p=1, q=1, dist="normal")
 
         # Store handle to model
-        self._sigmdl = am.fit(update_freq=5)  # Limit the stdout to every 5 iterations
+        self._sigmdl = am.fit()
 
-        # Store results (1-step ahead)
-        forecasts = self._reforecast(horizon=1)
-        self._nu = forecasts.variance.values[-1, :]
-        self._vol_mean = forecasts.mean.values[-1, :]
+        # Store results (for whole trading yeear)
+        forecasts = self._reforecast(horizon=h)
+        self._sigma = np.sqrt(forecasts.variance.values[-1, :])
+        self._mu = forecasts.mean.values[-1, :]
+
+    def diagnostics(self) -> Tuple[float]:
+        '''
+        Null hypothesis under KS test: Residuals are normal-distributed.
+
+        @Params:     None
+        @Returns:    (float, float):         KS-statistic and p-value
+        '''
+        forecasts = self._reforecast(horizon=len(self._dlogX))
+        self._epsilons = forecasts.mean.values[-1, :] - self._dlogX
+
+        res_mdl = stats.norm.fit(self._epsilons)
+        test_result = stats.kstest(self._epsilons, "norm", args=res_mdl)
+
+        return (test_result.statistic, test_result.pvalue)
 
     @property
     def X(self) -> np.ndarray:
@@ -79,7 +107,7 @@ class GarchVol:
         '''
         Return the mean of the underlying returns. If this has not been calculated at elast once, then return the empirical mean.
         '''
-        if self._mu == 0.0:
+        if np.max(self._mu) == 0.0:
             self._log_rts()
 
         return self._mu
@@ -89,17 +117,7 @@ class GarchVol:
         '''
         Return the volatility of underlying returns. If this has not been calculated at lease once, then use empirical volatility.
         '''
-        if self._sigma == 0.0:
+        if np.max(self._sigma) == 0.0:
             self._log_rts()
 
         return self._sigma
-
-    @property
-    def nu(self) -> float:
-        '''
-        Return the volatility of the volatility (i.e. volatility of sigma).
-        '''
-        if self.nu == 0.0:
-            raise Warning('Nu = 0. Possibly undefined.')
-
-        return self.nu
