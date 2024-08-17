@@ -59,12 +59,10 @@ print('\nUsing the First-Passage Time model, calculate risk-neutral reinsurance 
 asset_sig = cc.get_asset_volatility(income, vol, outgo, rf)
 print(f'Obtain implied asset volatility: {asset_sig:,.3%}')
 
-rn_rol = cc.get_fpt_default_probability(a0=income, rf=rf, sigma_a=asset_sig, L=outgo, gamma=infl)
+# Discounting to present used in probability calc
+rn_rol = cc.get_fpt_default_probability(a0=income, rf=rf, sigma_a=asset_sig, L=outgo, gamma=infl) * np.exp(-rf)
 print(f'Risk-neutral ROL:      {rn_rol:,.3%}')
 
 # Risk-adjust via the Wang transform
 rol = cc.wang_transform([rn_rol], sharpe_ratio=-drft)[0]
-
-# Now attain present value of rol
-rol *= np.exp(-rf)
 print(f'Risk-adj. ROL:         {rol:,.3%}')
