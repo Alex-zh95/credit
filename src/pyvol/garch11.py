@@ -57,7 +57,7 @@ class GarchVol:
         self._mu = np.mean(self._dlogX)
         self._sigma = np.std(self._dlogX)
 
-    def fit_garch(self, start: int = 0, end: int = 0, p: int = 1, q: int = 1, h: int = 252) -> None:
+    def fit_garch(self, start: int = 0, end: int = 0, p: int = 1, q: int = 1, h: int = 5) -> None:
         '''
         Fit the GARCH(p,q) model to the underlying return data.
 
@@ -65,12 +65,12 @@ class GarchVol:
                     end:    int = 0:      Clip the end of the vector (no end clip by default)
                     p:      int = 1:      ARCH p parameter (i.e. the AR(p) for underlying variance)
                     q:      int = 1:      GARCH q parameter (i.e. the MA(q) for underlying variance)
-                    h:      int = 252:    Horizon for projection (trading year default)
+                    h:      int = 5       Max horizon for projection
 
         @Returns:   None
         '''
         dlogX = self._dlogX[start:len(self._dlogX)] if end == 0 else self._dlogX[start:end]
-        am = arch.arch_model(dlogX, vol='GARCH', p=1, q=1, dist="normal")
+        am = arch.arch_model(dlogX, vol='GARCH', p=p, q=q, dist="normal")
 
         # Store handle to model
         self._sigmdl = am.fit()
