@@ -3,11 +3,11 @@
 @Description:   Script used for fitting a GARCH(1,1) model to imply volatility. This method is more useful if there are no implied volatility data available.
 """
 
+from __future__ import annotations
+
 import numpy as np
 import arch
 from scipy import stats
-
-from typing import Tuple
 
 
 class GarchVol:
@@ -37,7 +37,7 @@ class GarchVol:
         # Residual variances - we run diagnostics here
         self._epsilons = np.zeros(X.shape[0] - 1)
 
-    def _reforecast(self, horizon: int = 1):  # -> arch.ARCHModelForecast:
+    def _reforecast(self, horizon: int = 1) -> arch.ARCHModelForecast:
         '''
         Private fn: Perform forecast using _sigmdl but with custom horizon.
 
@@ -80,7 +80,7 @@ class GarchVol:
         self._sigma = np.sqrt(forecasts.variance.values[-1, :])
         self._mu = forecasts.mean.values[-1, :]
 
-    def diagnostics(self) -> Tuple[float]:
+    def diagnostics(self) -> tuple[float]:
         '''
         Null hypothesis under KS test: Residuals are normal-distributed.
 

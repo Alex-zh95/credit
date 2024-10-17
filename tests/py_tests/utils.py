@@ -2,7 +2,7 @@
 Utility file to store Python runtime functions.
 """
 
-import yfiannce as yf
+import yfinance as yf
 import pandas as pd
 import numpy as np
 import datetime as dt
