@@ -1,3 +1,10 @@
+# Preamble for running script outside of REPLs: add parent directory to sys path
+import sys
+import os
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(script_dir))
+
 import numpy as np
 import yfinance as yf
 
