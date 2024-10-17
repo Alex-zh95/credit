@@ -10,11 +10,11 @@
  *
  * @Params:         double S0:          Current price of underlying
  *                  double K:           Strike price
- *                  double rf     Risk-free interest rate
+ *                  double rf:          Risk-free interest rate
  *                  double sigma:       Volatility of observed price
- *                  double t:           Duration of the option (expiry)
+ *                  double t = 1:       Duration of the option (expiry)
  *                  double q = 0:       Assumed constant and continuous dividend rate
- *                  bool call:          Whether looking at call or put, defaulted to true
+ *                  bool call = true:   Whether looking at call or put, default is call
  *
  * @Returns:        std::tuple<double, double, double>, split into the following:
  *                      double price       Price of option at time 0
@@ -26,7 +26,7 @@ std::tuple<double, double, double> vanilla_option_price(
     const double K,
     const double r,
     const double sigma,
-    const double t,
+    const double t = 1,
     const bool call = true,
     const double q = 0);
 
@@ -36,9 +36,9 @@ std::tuple<double, double, double> vanilla_option_price(
  *                  double K:           Strike price
  *                  double r:           Risk-free interest rate
  *                  double sigma:       Volatility of observed price
- *                  double t:           Duration of the option (expiry)
- *                  double gamma:       Growth rate of the strike price, defaulted to 0
- *                  double q:           Dividend rate, defaulted to 0
+ *                  double t = 1:       Duration of the option (expiry)
+ *                  double gamma = 0:   Growth rate of the strike price
+ *                  double q = 0:       Dividend rate
  *
  * @Returns:        std::tuple<double, double>, split into the following:
  *
@@ -75,8 +75,8 @@ std::vector<double> wang_transform(
  *                  double sigma_e:             Equity volatility
  *                  double L:                   Face value of debt
  *                  double r:                   Risk-free rate of return
- *                  double t:                   Debt duration, defaulted to 1
- *                  const n_iter:                Maximum number of iterations, defaulted to 50
+ *                  double t = 1:               Debt duration
+ *                  const n_iter = 50:          Maximum number of iterations
  *
  * @Returns:        double sigma_a:             Asset volatility
  */
@@ -94,7 +94,7 @@ double get_asset_volatility(
  *                  double rf:              Asset drift
  *                  double sigma_a:         Asset volatility
  *                  double L:               Debt face value
- *                  double t:               Duration of debt, defaulted to 1
+ *                  double t = 1:           Duration of debt
  *
  * @Returns:        double p_default:       Probability of default
  */
@@ -111,9 +111,9 @@ double get_vanilla_default_probability(
  *                  double rf:              Asset drift
  *                  double sigma_a:         Asset volatility
  *                  double L:               Debt boundary value
- *                  double q:               Dividend rate, defaulted to 0
- *                  double gamma:           Debt growth rate, defaulted to 0
- *                  double t:               Duration of debt, defaulted to 1
+ *                  double q = 0:           Dividend rate
+ *                  double gamma = 1:       Debt growth rate
+ *                  double t = 1:           Duration of debt
  *
  * @Returns:        double p_default:       Probability of default
  */
@@ -152,5 +152,24 @@ double get_returns_with_put(
     const double y_var,
     const double put,
     const double r);
+
+/* @Description:    Calculate corresponding price of a put or call option given a call or put option via put-call parity.
+ *
+ * @Params:         double in_price:        Price of instrument to convert
+ *                  double rf:              Risk-free interest rate
+ *                  double S0:              Value of underlying instrument
+ *                  double K:               Strike price
+ *                  double t = 1:           Duration of contract
+ *                  bool in_call = true:    Type of instrument, default to call
+ * 
+ * @Returns:        double out_price:       Price of converted instrument
+ */
+double put_call_parity(
+    const double in_price,
+    const double rf,
+    const double S0,
+    const double K,
+    const double t = 1,
+    bool in_call = true);
 
 #endif

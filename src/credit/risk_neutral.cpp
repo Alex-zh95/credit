@@ -24,15 +24,15 @@ std::tuple<double, double, double> vanilla_option_price(
     const bool call,
     const double q)
 {
-    double d1, d2;
-    double Phi1, Phi2;
-    double price = 0.0;
+    auto Phi1 = 0.0;
+    auto Phi2 = 0.0;
+    auto price = 0.0;
 
     // Define N(0,1) object
     normal N(0.0, 1.0);
 
-    d1 = (log(S0 / K) + (r - q + 0.5 * pow(sigma, 2.0)) * t) / (sigma * sqrt(t));
-    d2 = d1 - sigma * sqrt(t);
+    auto d1 = (log(S0 / K) + (r - q + 0.5 * pow(sigma, 2.0)) * t) / (sigma * sqrt(t));
+    auto d2 = d1 - sigma * sqrt(t);
 
     if (call)
     {
@@ -148,7 +148,7 @@ double get_vanilla_default_probability(
 {
     normal N(0.0, 1.0);
 
-    double distance_to_default = (log(a0 / L) + (rf - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
+    auto distance_to_default = (log(a0 / L) + (rf - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
     return cdf(N, -distance_to_default);
 }
 
@@ -186,13 +186,33 @@ double get_returns_with_put(
     const double r)
 {
     // Determine historic investment mean return
-    const double sigma2_pt = log(1 + y_var / pow(y, 2));
-    const double mu_pt = log(pow(y, 2) / sqrt(y_var + pow(y, 2)));
+    const auto sigma2_pt = log(1 + y_var / pow(y, 2));
+    const auto mu_pt = log(pow(y, 2) / sqrt(y_var + pow(y, 2)));
 
     // Determine the mean return with put protection
     normal norm(0.0, 1.0);
-    const double zeta = (log(1 + r) - mu_pt) / sqrt(sigma2_pt);
-    double i_trunc = (1 + r) * cdf(norm, zeta) + exp(mu_pt + sigma2_pt / 2) - 1;
+    const auto zeta = (log(1 + r) - mu_pt) / sqrt(sigma2_pt);
+    auto i_trunc = (1 + r) * cdf(norm, zeta) + exp(mu_pt + sigma2_pt / 2) - 1;
 
     return i_trunc;
+}
+
+double put_call_parity(    
+    const double in_price,
+    const double rf,
+    const double S0,
+    const double K,
+    const double t,
+    bool in_call)
+{
+    auto result = 0.0;
+
+    if (in_call) 
+        // Incoming price is call so return put
+        result = in_price - S0 + K * exp(-rf * t);
+    else 
+        // Incoming price is put so return call
+        result = S0 - K * exp(-rf * t) + in_price;
+
+    return result;
 }
