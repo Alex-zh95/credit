@@ -1,7 +1,7 @@
 [project]
 name = "credit"
 version = "0.1.0"
-description = "Default template for PDM package"
+description = "Library analyzing credit and insurance default."
 authors = [
     {name = "chu", email = "zh.c.l.z.95@gmail.com"},
 ]
@@ -22,7 +22,7 @@ license = {text = "MIT"}
 
 
 [tool.pdm]
-distribution = false
+distribution = true
 
 [[tool.pdm.source]]
 url = "https://pypi.org/simple"
