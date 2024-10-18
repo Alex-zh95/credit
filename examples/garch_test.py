@@ -10,7 +10,7 @@ import yfinance as yf
 
 from datetime import datetime
 from src.pyvol.garch11 import GarchVol
-from build import cpy_credit as cc
+from src.pyvol import cpy_credit as cc
 
 
 print('Testing garch11.py...')

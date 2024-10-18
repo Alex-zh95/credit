@@ -13,3 +13,11 @@ find_package(pybind11 REQUIRED)
 pybind11_add_module(cpy_credit ${SOURCES})
 
 target_compile_definitions(cpy_credit PRIVATE VERSION_INFO=0.1.0)
+
+# Copy the built library to src/pyvol folder for the purposes of python-packaging
+add_custom_command(TARGET cpy_credit
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        $<TARGET_FILE:cpy_credit> ${CMAKE_SOURCE_DIR}/src/pyvol/$<TARGET_FILE_NAME:cpy_credit>
+    COMMENT "Copying library to pyvol source directory."
+)
