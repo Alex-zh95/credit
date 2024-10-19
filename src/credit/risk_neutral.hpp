@@ -172,4 +172,4 @@ double put_call_parity(
     const double t = 1,
     bool in_call = true);
 
-#endif
+#endif // RISK_NEUTRAL_H
