@@ -1,13 +1,11 @@
 // Testing file for Heston model via theory
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include "../../src/credit/stvol.hpp"
 
-int main() 
+bool test_Heston_pricing()
 {
-    std::cout << "Testing the Heston Call Model...\n";
-    std::cout << "Constructing underlying...\n\n";
-
     auto U = std::make_unique<StVol::Underlying>();
     U->S0 = 100.;
     U->v0 = 0.1;
@@ -36,10 +34,24 @@ int main()
     mdl.calc_option_price();
 
     auto mdl_price = mdl.get_option_price();
-    std::cout << "Strike price for call: " << strike << "\n\n";
+    auto error = (mdl_price - expected_price) / expected_price;
     std::cout << "Expected price:        " << expected_price << "\n";
     std::cout << "Model price:           " << mdl_price << "\n";
-    std::cout << "Percentage error:      " << (mdl_price - expected_price) / expected_price * 100 << "%\n";
+    std::cout << "Percentage error:      " << error * 100 << "%\n";
 
-    return 0;
+    return (std::abs(error) < 1e-3);
+}
+
+int main() 
+{
+    auto testPass = true;
+
+    std::cout << "Running test_Heston_pricing...\n\n";
+    testPass &= test_Heston_pricing();
+    std::cout << "\ntest_Heston_pricing result: " << (testPass?"Pass":"Fail") << "\n\n";
+
+    // Final result
+    std::cout << "All tests result: " << (testPass?"Pass":"Fail") << "\n";
+
+    return (testPass);
 }
