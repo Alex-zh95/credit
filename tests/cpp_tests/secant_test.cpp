@@ -32,5 +32,5 @@ int main() {
     // Final result
     std::cout << "All tests result: " << (testPass?"Pass":"Fail") << "\n";
 
-    return (testPass);
+    return (testPass?0:1);
 }
