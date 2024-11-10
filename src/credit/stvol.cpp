@@ -1,6 +1,8 @@
 #include <complex>
+#include <cstddef>
+#include <memory>
+#include <iostream>
 
-using std::log;
 using std::pow;
 using std::exp;
 using std::sqrt;
@@ -9,6 +11,8 @@ using namespace std::complex_literals;
 
 #include <boost/math/quadrature/trapezoidal.hpp>
 using boost::math::quadrature::trapezoidal;
+
+#include <nlopt.hpp>
 
 #include "stvol.hpp"
 
@@ -52,4 +56,104 @@ void StVol::HestonCallMdl::calc_option_price()
     // Price is given by 0.5*(S0 - Ke^(-rf*t)) + 1/pi * integral(realIntegrand)
     auto integrated = trapezoidal(realIntegrand, 1e-3, 1e3);
     P = 0.5 * (underlying->S0 - K * exp(-underlying->rf * t)) + M_1_PI * integrated;
+}
+
+
+std::unique_ptr<StVol::Underlying> StVol::market_calibration(
+    std::vector<HestonCallMdl>& hMdls, 
+    const std::vector<double> market_prices,
+    std::vector<double> initial_guess
+)
+{
+    // Define a separate struct to simplify loading fixed data
+    struct ExtData 
+    {
+        double S0;
+        double rf;
+        std::vector<double> strike;
+        std::vector<double> t;
+        std::vector<double> mdlPrices;
+        std::vector<double> expPrices;
+    };
+
+    // NLopt requires objective functions to have following signature
+    // Use the void* data part to pass in necessary data for expected and observed
+    auto obj = [](const std::vector<double> &x, std::vector<double> &grad, void *data)
+    {
+        // Cast the void ptr to data
+        auto* extData = static_cast<ExtData*>(data);
+        const auto n_obs = extData->mdlPrices.size();
+        auto err = 0.0;
+        
+        for (size_t j = 0; j < n_obs; ++j)
+        {
+            auto U = std::make_unique<StVol::Underlying>();
+
+            // Fixed params
+            U->S0 = extData->S0;
+            U->rf = extData->rf;
+
+            // Optimization variables to pack into U-> members
+            // Note: Structured bindings such as below are not permitted
+            // [U->v0, U->alpha, U->vTheta, U->vSig, U->vLambda, U->rho] = x;
+            // Instead use pointer-based loop to get around this
+            std::vector<double*> U_elems = {&U->v0, &U->alpha, &U->vTheta, &U->vSig, &U->vLambda, &U->rho};
+
+            for (size_t j = 0; j < U_elems.size(); ++j)
+                *U_elems[j] = x[j];
+
+            auto strike = extData->strike[j];
+            auto t = extData->t[j];
+
+            // Create Heston Model and evaluate the model price
+            StVol::HestonCallMdl mdl(std::move(U), strike, t);
+            mdl.calc_option_price();
+            extData->mdlPrices[j] = mdl.get_option_price();
+
+            err += pow(extData->mdlPrices[j] - extData->expPrices[j], 2) / n_obs;
+        }
+
+        return err;
+    };
+
+    // Prepare the data for optimization
+    ExtData mdlData = {
+        .S0 = hMdls[0].get_underlying().S0,
+        .rf = hMdls[0].get_underlying().rf,
+        .expPrices = market_prices
+    };
+
+    for (size_t j = 0; j < hMdls.size(); ++j)
+    {
+        mdlData.strike.push_back(hMdls[j].get_strike()) ;
+        mdlData.t.push_back(hMdls[j].get_maturity());
+
+        hMdls[j].calc_option_price();
+        mdlData.mdlPrices.push_back(hMdls[j].get_option_price());
+    }
+
+    // Minimize the square error for calibration
+    // nlopt::opt optimizer(nlopt::LD_SLSQP, initial_guess.size()); 
+    nlopt::opt optimizer(nlopt::LN_NELDERMEAD, initial_guess.size()); 
+    optimizer.set_min_objective(obj, &mdlData);
+    optimizer.set_ftol_abs(1e-3); // Tolerance
+    optimizer.set_maxeval(1000); // Maximum evaluation steps
+
+    auto minf = 100.0;
+
+    auto opt_code = optimizer.optimize(initial_guess, minf);
+    std::cout << "Optimizer result code: " << opt_code << "\n\n";
+
+    // Tidy the result by putting it into a new Underlying object
+    auto result = std::make_unique<StVol::Underlying>();
+    result->S0 = mdlData.S0;
+    result->rf = mdlData.rf;
+    result->v0 = initial_guess[0];
+    result->alpha = initial_guess[1];
+    result->vTheta = initial_guess[2];
+    result->vSig = initial_guess[3];
+    result->vLambda = initial_guess[4];
+    result->rho = initial_guess[5];
+
+    return result;
 }

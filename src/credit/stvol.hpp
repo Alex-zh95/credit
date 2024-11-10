@@ -3,10 +3,13 @@
 
 #include <complex>
 #include <memory>
+#include <vector>
 
 /* @Filename:        stvol.hpp
  * @Description:     Declares containers and objects for dealing with Heston model for volatility surface.
  */
+
+// General Note: Move constructors implicitly generated as long as no copy constructor/assignment defined, other than delete, or user-generated destructor.
 
 namespace StVol
 {
@@ -42,11 +45,56 @@ namespace StVol
         HestonCallMdl(std::unique_ptr<Underlying> _underlying, double _K, double _t = 1.) : underlying(std::move(_underlying)), K(_K), t(_t), P(0.0)
         {}
 
-        // Remove copy constructor and copy assignment operators explicitly
-        HestonCallMdl(const HestonCallMdl&) = delete;
-        HestonCallMdl& operator=(const HestonCallMdl&) = delete;
+        // Copy constructor
+        HestonCallMdl(const HestonCallMdl& other)
+        {
+            if (other.underlying)
+                underlying = std::make_unique<Underlying>(*other.underlying);
+            t = other.t;
+            P = other.P;
+            K = other.K;
+        }
 
-        // Note: Move constructors implicitly generated as long as no copy constructor/assignment defined, other than delete, or user-generated destructor.
+        // Move constructor
+        HestonCallMdl(HestonCallMdl&& other)
+        {
+            if (this != &other)
+            {
+                underlying = std::move(other.underlying);
+                t = other.t;
+                P = other.P;
+                K = other.K;
+            }
+        }
+        
+        // Copy assignment operator
+        HestonCallMdl& operator=(const HestonCallMdl& other)
+        {
+            if (this != &other)
+            {
+                underlying = std::make_unique<Underlying>(*other.underlying);
+                t = other.t;
+                P = other.P;
+                K = other.K;
+            }
+
+            return *this;
+        }
+
+        // Move assignment operator
+        HestonCallMdl& operator=(HestonCallMdl&& other)
+        {
+            if (this != &other)
+            {
+                underlying = std::move(other.underlying);
+                t = other.t;
+                P = other.P;
+                K = other.K;
+            }
+
+            return *this;
+        }
+    
 
         // Getters and setters
         void set_strike(double _K) { K = _K; }
@@ -86,6 +134,15 @@ namespace StVol
         double P;
     };
 
+    /* @Description: Calibrate a Heston model to market data of traded call options. Method involves optimizing the square error function of expected and observed Heston call prices against market data.
+     *
+     * @Params:     std::vector<HestonCallMdl>& hMdls:  Vector of market-traded call options
+     *              std::vector<double> market_prices:  Prices of those call options
+     *              std::vector<double> initial_guess:  Initial estimate of values
+     *
+     * @Returns:    std::unique_ptr<Underlying>:        Optimized underlying parameters for the Heston model.
+     */
+    std::unique_ptr<Underlying> market_calibration(std::vector<HestonCallMdl>& hMdls, const std::vector<double> market_prices, std::vector<double> initial_guess);
 } // namespace StVol
 
 #endif // STVOL_HPP
