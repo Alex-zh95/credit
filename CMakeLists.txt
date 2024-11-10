@@ -13,6 +13,9 @@ set(SOURCES
 find_package(pybind11 REQUIRED)
 pybind11_add_module(cpy_credit ${SOURCES})
 
+# Additional target for NLopt library
+find_package(NLopt REQUIRED)
+
 target_compile_definitions(cpy_credit PRIVATE VERSION_INFO=0.1.0)
 
 # Copy the built library to src/pyvol folder for the purposes of python-packaging
@@ -27,6 +30,7 @@ add_custom_command(TARGET cpy_credit
 enable_testing()
 
 add_executable(HestonTest tests/cpp_tests/HestonTest.cpp src/credit/stvol.cpp)
+target_link_libraries(HestonTest PRIVATE nlopt)
 add_test(HestonTest HestonTest)
 
 add_executable(SecantTest tests/cpp_tests/secant_test.cpp)
