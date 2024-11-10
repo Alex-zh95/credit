@@ -64,20 +64,21 @@ bool test_Heston_calibration()
     auto rho = -0.5711;
 
     // Set up initial values (expected values with some shifts)
-    std::vector<double> x0 = {v0+0.05, alpha-0.01, vTheta+0.02, vSig+0.05, vLambda-0.01, rho+0.001};
+    // std::vector<double> x0 = {v0+0.05, alpha-0.01, vTheta+0.02, vSig+0.05, vLambda-0.01, rho+0.001, 0.03};
+    std::vector<double> x0 = {v0/2, alpha, vTheta*2, vSig+0.05, vLambda*0.95, rho+0.001, 0.03};
 
     for (int j = -10; j < 10; j++) 
     {
         auto dj = static_cast<double>(j);
         auto U = std::make_unique<StVol::Underlying>();
         U->S0 = S0;
-        U->rf = 0.03;
         U->v0 = x0[0] * (1 + dj/100);
         U->alpha = x0[1];
         U->vTheta = x0[2] * (1 + 2*dj/100);
         U->vSig = x0[3] * (1 + dj/100);
         U->vLambda = x0[4] * (1 + 2*dj/100);
         U->rho = x0[5] * (1 + dj/100);
+        U->rf = x0[6];
         auto strike = 100.;
 
         StVol::HestonCallMdl mdl(std::move(U), strike);

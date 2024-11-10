@@ -69,7 +69,7 @@ std::unique_ptr<StVol::Underlying> StVol::market_calibration(
     struct ExtData 
     {
         double S0;
-        double rf;
+        std::vector<double> rf;
         std::vector<double> strike;
         std::vector<double> t;
         std::vector<double> mdlPrices;
@@ -91,13 +91,12 @@ std::unique_ptr<StVol::Underlying> StVol::market_calibration(
 
             // Fixed params
             U->S0 = extData->S0;
-            U->rf = extData->rf;
 
             // Optimization variables to pack into U-> members
             // Note: Structured bindings such as below are not permitted
             // [U->v0, U->alpha, U->vTheta, U->vSig, U->vLambda, U->rho] = x;
             // Instead use pointer-based loop to get around this
-            std::vector<double*> U_elems = {&U->v0, &U->alpha, &U->vTheta, &U->vSig, &U->vLambda, &U->rho};
+            std::vector<double*> U_elems = {&U->v0, &U->alpha, &U->vTheta, &U->vSig, &U->vLambda, &U->rho, &U->rf};
 
             for (size_t j = 0; j < U_elems.size(); ++j)
                 *U_elems[j] = x[j];
@@ -119,7 +118,6 @@ std::unique_ptr<StVol::Underlying> StVol::market_calibration(
     // Prepare the data for optimization
     ExtData mdlData = {
         .S0 = hMdls[0].get_underlying().S0,
-        .rf = hMdls[0].get_underlying().rf,
         .expPrices = market_prices
     };
 
@@ -127,14 +125,16 @@ std::unique_ptr<StVol::Underlying> StVol::market_calibration(
     {
         mdlData.strike.push_back(hMdls[j].get_strike()) ;
         mdlData.t.push_back(hMdls[j].get_maturity());
+        mdlData.rf.push_back(hMdls[j].get_underlying().rf);
 
         hMdls[j].calc_option_price();
         mdlData.mdlPrices.push_back(hMdls[j].get_option_price());
     }
 
     // Minimize the square error for calibration
-    // nlopt::opt optimizer(nlopt::LD_SLSQP, initial_guess.size()); 
-    nlopt::opt optimizer(nlopt::LN_NELDERMEAD, initial_guess.size()); 
+    // Opt technique selected COBYLA (Constrained Opt. By Lin. Apprx)
+    // Adv: no derivative required, good for non-convex smooth problems
+    nlopt::opt optimizer(nlopt::LN_COBYLA, initial_guess.size()); 
     optimizer.set_min_objective(obj, &mdlData);
     optimizer.set_ftol_abs(1e-3); // Tolerance
     optimizer.set_maxeval(1000); // Maximum evaluation steps
@@ -147,13 +147,13 @@ std::unique_ptr<StVol::Underlying> StVol::market_calibration(
     // Tidy the result by putting it into a new Underlying object
     auto result = std::make_unique<StVol::Underlying>();
     result->S0 = mdlData.S0;
-    result->rf = mdlData.rf;
     result->v0 = initial_guess[0];
     result->alpha = initial_guess[1];
     result->vTheta = initial_guess[2];
     result->vSig = initial_guess[3];
     result->vLambda = initial_guess[4];
     result->rho = initial_guess[5];
+    result->rf = mdlData.rf[6];
 
     return result;
 }
