@@ -46,14 +46,12 @@ Default can also be defined as the point at which a reinsurance contract would p
 
 ## Volatility
 
-Volatility is hard to observe generally. Some methods include:
-
-- Using implied volatility via existing options. Can use the Black-Scholes model to retrieve the volatility for underlying. However, this implies constant volatility is applicable, and many options can yield differing implied volatilities.
-- Can use time-series methods to do this. Commonly used is the GARCH(1,1) model.  
+Volatility is hard to observe generally. Classic Black-Scholes implies constant volatility over the period of observation, which may not hold. To allow for volatility to be a stochastic quantity, use the Heston model or time series. A common time series implementation is the GARCH(1,1) model.
 
 ## References
 
 1. [Idea for implied asset volatility](https://www.bradfordlynch.com/blog/2017/05/20/ProbabilityOfDefault.html)
-2. Hull, J. (2021). ‘Options, Futures, and Other Derivatives, Global Edition’.
-3. Cummins, J.D. (1990) ‘Asset Pricing Models and Insurance Ratemaking’, ASTIN Bulletin, 20(2), pp. 125–166. doi:10.2143/AST.20.2.2005438
+2. Hull, J. (2021): ‘Options, Futures, and Other Derivatives, Global Edition’.
+3. Cummins, J.D. (1990): ‘Asset Pricing Models and Insurance Ratemaking’, ASTIN Bulletin, 20(2), pp. 125–166. doi:10.2143/AST.20.2.2005438
 4. [Basket call options](https://quant.stackexchange.com/questions/57235/do-basket-options-have-a-closed-form-valuation-formula)
+5. Mikhailov S., Nögel U. (2003): ‘Heston’s Stochastic Volatility Model Implementation, Calibration and Some Extensions’.
