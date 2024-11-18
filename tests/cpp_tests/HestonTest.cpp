@@ -42,6 +42,7 @@ bool test_Heston_pricing()
     std::cout << "Expected price:        " << expected_price << "\n";
     std::cout << "Model price:           " << mdl_price << "\n";
     std::cout << "Percentage error:      " << error * 100 << "%\n";
+    std::cout << "Risk-neutral P2:       " << mdl.get_rn_exercise_probability() << "\n";
 
     return (std::abs(error) < 1e-3);
 }
@@ -105,6 +106,10 @@ bool test_Heston_calibration()
     auto error2 = pow(V->v0 - v0, 2) / v0 + pow(V->alpha - alpha, 2) / alpha + pow(V->vTheta - vTheta, 2) / vTheta + pow(V->vLambda - vLambda, 2) / vLambda + pow(V->vSig - vSig, 2) / vSig + pow(V->rho - rho, 2) / rho;
 
     std::cout << "Avg percentage error:  " << sqrt(error2) * 100 / x0.size() << "%\n";
+
+    StVol::HestonCallMdl mdl(std::move(V), 100.0);
+    std::cout << "Fitted risk-neutral P2:" << mdl.get_rn_exercise_probability() << "\n";
+
     return (std::abs(sqrt(error2)) < 0.1 * x0.size());
 }
 

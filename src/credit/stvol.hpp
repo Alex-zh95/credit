@@ -108,6 +108,12 @@ namespace StVol
         // Read-only const access to the Underlying struct
         const Underlying& get_underlying() const { return *underlying; }
 
+        /* @Description: Get risk-neutral probability of exercise (asset > strike) */
+        double get_rn_exercise_probability();
+
+        /* @Description: Get delta of European call option. */
+        double get_delta();
+
         /* @Description: Main pricing function of the Heston model to calculate. */
         void calc_option_price();
 
@@ -134,7 +140,9 @@ namespace StVol
         double P;
     };
 
-    /* @Description: Calibrate a Heston model to market data of traded call options. Method involves optimizing the square error function of expected and observed Heston call prices against market data.
+    /* @Description: Calibrate a Heston model to market data of traded call options. 
+     *
+     * Method involves optimizing the square error function of expected and observed Heston call prices against market data.
      *
      * @Params:     std::vector<HestonCallMdl>& hMdls:  Vector of market-traded call options
      *              std::vector<double> market_prices:  Prices of those call options

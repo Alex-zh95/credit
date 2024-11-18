@@ -1,3 +1,4 @@
+#include <cmath>
 #include <complex>
 #include <cstddef>
 #include <memory>
@@ -58,6 +59,30 @@ void StVol::HestonCallMdl::calc_option_price()
     P = 0.5 * (underlying->S0 - K * exp(-underlying->rf * t)) + M_1_PI * integrated;
 }
 
+double StVol::HestonCallMdl::get_delta()
+{
+    auto realIntegrand = [this](double _phi) {
+        auto phiShift = _phi - 1i;
+        auto numerator = charFn(phiShift);
+        auto denominator = 1i * _phi * pow(K, 1i * _phi);
+        return real(numerator/denominator);
+    };
+
+    auto integrated = trapezoidal(realIntegrand, 1e-3, 1e3);
+    return (0.5 + M_1_PI * integrated);
+}
+
+double StVol::HestonCallMdl::get_rn_exercise_probability()
+{
+    auto realIntegrand = [this](double _phi) {
+        auto numerator = charFn(_phi);
+        auto denominator = 1i * _phi * pow(K, 1i * _phi);
+        return real(numerator/denominator);
+    };
+
+    auto integrated = trapezoidal(realIntegrand, 1e-3, 1e3);
+    return (0.5 + M_1_PI * integrated);
+}
 
 std::unique_ptr<StVol::Underlying> StVol::market_calibration(
     std::vector<HestonCallMdl>& hMdls, 
