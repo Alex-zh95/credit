@@ -178,7 +178,7 @@ std::unique_ptr<StVol::Underlying> StVol::market_calibration(
     result->vSig = initial_guess[3];
     result->vLambda = initial_guess[4];
     result->rho = initial_guess[5];
-    result->rf = mdlData.rf[6];
+    result->rf = initial_guess[6];
 
     return result;
 }
