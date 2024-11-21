@@ -33,5 +33,5 @@ add_executable(HestonTest tests/cpp_tests/HestonTest.cpp src/credit/stvol.cpp)
 target_link_libraries(HestonTest PRIVATE nlopt)
 add_test(HestonTest HestonTest)
 
-add_executable(SecantTest tests/cpp_tests/secant_test.cpp)
+add_executable(SecantTest tests/cpp_tests/SecantTest.cpp)
 add_test(SecantTest SecantTest)
