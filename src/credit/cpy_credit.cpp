@@ -10,12 +10,72 @@ namespace py = pybind11;
 #include "risk_neutral.hpp"
 #include "stvol.hpp"
 
-// Helper function for creating unique pointers to StVol's Underlying struct
-std::unique_ptr<StVol::HestonCallMdl> HestonConstructorHelper(std::unique_ptr<StVol::Underlying> _uPtr, double _strike, double _maturity = 1.0)
+/* C++ Interfaces for StVol::HestonCallMdl 
+ * This is due to not being able to pass std::unique_ptr<...> as arguments as Python does not implement such concepts.
+ */
+
+// Simplified accessor to get a default probability via training of Heston model on market data
+StVol::Underlying fit_Hst(
+    StVol::Underlying U0,
+    std::vector<double> Ks,
+    std::vector<double> Ts,
+    std::vector<double> Ps
+)
 {
-    return std::make_unique<StVol::HestonCallMdl>(std::move(_uPtr), _strike, _maturity);
+    std::vector<StVol::HestonCallMdl> mdls;
+    std::vector<double> initial_guess = {
+        U0.v0, U0.alpha, U0.vTheta, U0.vSig, U0.vLambda, U0.rho, U0.rf
+    };
+
+    auto nOptions = Ks.size();
+
+    // Set up the vector of models for fit
+    for (decltype(nOptions) j = 0; j < nOptions; ++j)
+    {
+        auto _U = std::make_unique<StVol::Underlying>();
+        _U->S0 = U0.S0;
+        _U->v0 = U0.v0;
+        _U->alpha = U0.alpha;
+        _U->vTheta = U0.vTheta;
+        _U->vSig = U0.vSig;
+        _U->vLambda = U0.vLambda;
+        _U->rho = U0.rho;
+        _U->rf = U0.rf;
+
+        StVol::HestonCallMdl mdl(std::move(_U), Ks[j]);
+        mdl.calc_option_price();
+
+        mdls.push_back(std::move(mdl));
+    }
+
+    // Fitted parameters to be stored in another StVol::Underlying
+    auto V = StVol::market_calibration(mdls, Ps, initial_guess);
+
+    return *V;
 }
 
+double get_Hst_default_probability(
+    StVol::Underlying U_fitted,
+    double strike
+)
+{
+    auto _U = std::make_unique<StVol::Underlying>();
+    _U->S0 = U_fitted.S0;
+    _U->v0 = U_fitted.v0;
+    _U->alpha = U_fitted.alpha;
+    _U->vTheta = U_fitted.vTheta;
+    _U->vSig = U_fitted.vSig;
+    _U->vLambda = U_fitted.vLambda;
+    _U->rho = U_fitted.rho;
+    _U->rf = U_fitted.rf;
+
+    StVol::HestonCallMdl mdl(std::move(_U), strike);
+    mdl.calc_option_price();
+
+    return (1. - mdl.get_rn_exercise_probability());
+}
+
+/* Exposing definitions to Python. */
 PYBIND11_MODULE(cpy_credit, m) {
     m.doc() = "Module containing procedures for structural credit models and capital determination.";
 
@@ -74,22 +134,17 @@ PYBIND11_MODULE(cpy_credit, m) {
         .def_readwrite("vLambda", &StVol::Underlying::vLambda)
         .def_readwrite("rf", &StVol::Underlying::rf);
 
-    // Note: We will have to redefine how to expose this class or its calculations via helper C++ functions - i.e. probably separate handling of StVol::Underlying objects and wrappers for HestonMdlCall to avoid exposing unique pointers
-    // py::class_<StVol::HestonCallMdl>(m, "HestonCallMdl")
-    //     // Will only register the custom constructor - other constructors will be registered automatically
-    //     .def(
-    //         // ERROR: Illegal to use uniqe ptrs as function arguments for pybind
-    //         py::init<std::unique_ptr<StVol::Underlying>, double, double>(),
-    //         py::arg("_underlying"), py::arg("_K"), py::arg("_t") = 1.0
-    //     )
+    m.def(
+        "fit_Hst",
+        &fit_Hst,
+        "Fit a Heston model to available call options data",
+        py::arg("U0"), py::arg("Ks"), py::arg("Ts"), py::arg("Ps")
+    );
 
-    //     // Getters and setters
-    //     .def_property("t", &StVol::HestonCallMdl::get_maturity, &StVol::HestonCallMdl::set_maturity)
-    //     .def_property("P", &StVol::HestonCallMdl::get_option_price, nullptr)
-    //     .def_property("K", &StVol::HestonCallMdl::get_strike, &StVol::HestonCallMdl::set_strike)
-
-    //     // Public member functions
-    //     .def("get_rn_exercise_probability", &StVol::HestonCallMdl::get_rn_exercise_probability)
-    //     .def("get_delta", &StVol::HestonCallMdl::get_delta)
-    //     .def("calc_option_price", &StVol::HestonCallMdl::calc_option_price);
+    m.def(
+        "get_Hst_default_probability",
+        &get_Hst_default_probability,
+        "Attain risk-neutral default probability (Heston).",
+        py::arg("U_fitted"), py::arg("strike")
+    );
 }
