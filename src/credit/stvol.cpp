@@ -123,8 +123,8 @@ std::unique_ptr<StVol::Underlying> StVol::market_calibration(
             // Instead use pointer-based loop to get around this
             std::vector<double*> U_elems = {&U->v0, &U->alpha, &U->vTheta, &U->vSig, &U->vLambda, &U->rho, &U->rf};
 
-            for (size_t j = 0; j < U_elems.size(); ++j)
-                *U_elems[j] = x[j];
+            for (size_t k = 0; k < U_elems.size(); ++k)
+                *U_elems[k] = x[k];
 
             auto strike = extData->strike[j];
             auto t = extData->t[j];
