@@ -54,6 +54,28 @@ StVol::Underlying fit_Hst(
     return *V;
 }
 
+double get_Hst_call_price(
+    StVol::Underlying U0,
+    double strike,
+    double t = 1
+)
+{
+    auto _U = std::make_unique<StVol::Underlying>();
+    _U->S0 = U0.S0;
+    _U->v0 = U0.v0;
+    _U->alpha = U0.alpha;
+    _U->vTheta = U0.vTheta;
+    _U->vSig = U0.vSig;
+    _U->vLambda = U0.vLambda;
+    _U->rho = U0.rho;
+    _U->rf = U0.rf;
+
+    StVol::HestonCallMdl mdl(std::move(_U), strike);
+    mdl.calc_option_price();
+
+    return mdl.get_option_price();
+}
+
 double get_Hst_default_probability(
     StVol::Underlying U_fitted,
     double strike
@@ -146,5 +168,12 @@ PYBIND11_MODULE(cpy_credit, m) {
         &get_Hst_default_probability,
         "Attain risk-neutral default probability (Heston).",
         py::arg("U_fitted"), py::arg("strike")
+    );
+
+    m.def(
+        "get_Hst_call_price",
+        &get_Hst_call_price,
+        "Calculate price of a European vanilla call option under Heston model.",
+        py::arg("U0"), py::arg("strike"), py::arg("t") = 1.0
     );
 }
