@@ -17,6 +17,7 @@ pybind11_add_module(cpy_credit ${SOURCES})
 find_package(NLopt REQUIRED)
 
 target_compile_definitions(cpy_credit PRIVATE VERSION_INFO=0.1.0)
+target_link_libraries(cpy_credit PRIVATE nlopt)
 
 # Copy the built library to src/pyvol folder for the purposes of python-packaging
 add_custom_command(TARGET cpy_credit
