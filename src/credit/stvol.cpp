@@ -161,13 +161,21 @@ std::unique_ptr<StVol::Underlying> StVol::market_calibration(
     // Adv: no derivative required, good for non-convex smooth problems
     nlopt::opt optimizer(nlopt::LN_COBYLA, initial_guess.size()); 
     optimizer.set_min_objective(obj, &mdlData);
-    optimizer.set_ftol_abs(1e-3); // Tolerance
-    optimizer.set_maxeval(1000); // Maximum evaluation steps
+    optimizer.set_ftol_abs(1e-3);   // Tolerance
+    optimizer.set_maxeval(1000);    // Maximum evaluation steps
+    optimizer.set_maxtime(5.0);     // Max time in case we get stuck
 
-    auto minf = 100.0;
+    auto opt_code = 0;
 
-    auto opt_code = optimizer.optimize(initial_guess, minf);
-    std::cout << "Optimizer result code: " << opt_code << "\n\n";
+    try
+    {
+        auto opt_code = optimizer.optimize(initial_guess);
+    }
+    catch (std::exception& e)
+    {
+        std::cout << "Optimizer result code: " << opt_code << "\n\n";
+        std::cerr << "NLopt error: " << e.what() << "\n\n";
+    }
 
     // Tidy the result by putting it into a new Underlying object
     auto result = std::make_unique<StVol::Underlying>();
