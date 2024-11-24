@@ -3,21 +3,12 @@
 import numpy as np
 from src.pyvol import cpy_credit as cc
 
-from multiprocessing import Process, Queue
-
-use_multiprocessing: bool = False
-
-# Put a wrapper around the C++ function for fit_Hst for multiprocessing purposes
-def py_fit_Hst(underlying, strikes, optn_prices, maturities, result_queue):
-    result = cc.fit_Hst(underlying, strikes, maturities, optn_prices)
-    result_queue.put(result)
-
 
 # Construct some options data (AAPL as ref)
 spot_price = 229.87
 
 options_data = {
-    'rf': [0.030, 0.035, 0.032, 0.033, 0.031, 0.029],
+    'rf': [0.030, 0.035, 0.032, 0.033, 0.031],
     'prices': [34.25, 31.20, 28.15, 24.40, 21.10],
     'strikes': [215., 220., 225., 230., 235.],
     'iv': [0.3256, 0.3197, 0.3121, 0.2945, 0.2806]
@@ -36,37 +27,22 @@ pyU = cc.Underlying()
 pyU.S0 = spot_price
 pyU.v0 = 0.1
 pyU.alpha = 1.5
-pyU.vSig = 0.3           
+pyU.vSig = 0.3
 pyU.rho = 0.05          # Assume very weak positive corr
 pyU.vTheta = 0.1
-pyU.rf = 0.03
+pyU.rf = 0.03           # Assumed treasury yield
 pyU.vLambda = 0.3118    # 52-week change in market price
 
-# pyU.v0 = 0.1
-# pyU.alpha = 1.5
-# pyU.vSig = 0.3           
-# pyU.rho = 0.05          # Assume very weak positive corr
-# pyU.vTheta = 0.1
-# pyU.rf = 0.03
-# pyU.vLambda = 0.3
+testPrice = cc.get_Hst_call_price(pyU, np.mean(options_data['strikes']))
+print(f'Testing price with avg Price: {testPrice}')
+
+if np.isnan(testPrice):
+    raise ValueError("Initial guess will not yield convergence.")
 
 # A fitted Heston yields another Underlying with the parameters
 print('Fitting...')
 
-if use_multiprocessing:
-    result_queue = Queue()
-    proc = Process(target=py_fit_Hst, args=(pyU, options_data['strikes'], np.repeat(1., 5), options_data['prices'], result_queue))
-    proc.start()
-    proc.join(timeout=5.0)
-
-    if proc.is_alive():
-        proc.terminate()
-        proc.join()
-        raise TimeoutError("Fitting Heston model time out. Terminating...")
-
-    pyV = result_queue.get()
-else:
-    pyV = cc.fit_Hst(pyU, options_data['strikes'], np.repeat(1., 5), options_data['prices'])
+pyV = cc.fit_Hst(pyU, options_data['strikes'], np.repeat(1., 5), options_data['prices'])
 
 print('\nFit results:')
 print(f'Spot price:         {pyV.S0:,.1f}')
