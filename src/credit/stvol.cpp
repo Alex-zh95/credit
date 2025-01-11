@@ -61,7 +61,8 @@ void StVol::HestonCallMdl::calc_option_price()
 
 double StVol::HestonCallMdl::get_delta()
 {
-    auto realIntegrand = [this](double _phi) {
+    auto realIntegrand = [this](double _phi) 
+    {
         auto phiShift = _phi - 1i;
         auto numerator = charFn(phiShift);
         auto denominator = 1i * _phi * pow(K, 1i * _phi);
@@ -74,7 +75,8 @@ double StVol::HestonCallMdl::get_delta()
 
 double StVol::HestonCallMdl::get_rn_exercise_probability()
 {
-    auto realIntegrand = [this](double _phi) {
+    auto realIntegrand = [this](double _phi) 
+    {
         auto numerator = charFn(_phi);
         auto denominator = 1i * _phi * pow(K, 1i * _phi);
         return real(numerator/denominator);

@@ -66,7 +66,21 @@ bool test_Heston_calibration()
 
     // Set up initial values (expected values with some shifts)
     // std::vector<double> x0 = {v0+0.05, alpha-0.01, vTheta+0.02, vSig+0.05, vLambda-0.01, rho+0.001, 0.03};
-    std::vector<double> x0 = {v0/2, alpha, vTheta*2, vSig+0.05, vLambda*0.95, rho+0.001, 0.03};
+    std::vector<double> x0 = {
+        // v0/2, 
+        0.05,
+        // alpha, 
+        1.5,
+        // vTheta*2, 
+        0.05, 
+        // vSig+0.05, 
+        0.5, 
+        // vLambda*0.95, 
+        0.5, 
+        // rho+0.001, 
+        0.5, 
+        0.03
+    };
 
     for (int j = -10; j < 10; j++) 
     {
