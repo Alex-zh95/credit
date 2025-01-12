@@ -32,9 +32,13 @@ $$C(t) = \frac{1}{2}(S_0 - Ke^{-rt}) + \frac{1}{\pi} \int_0^{\inf} \Re\left\[ e^
 
 where $\varphi$ is a simplification for $\varphi_1, \varphi_2$ through some change of variables.
 '''
+
 import numpy as np
+import pandas as pd
 from scipy.integrate import quad
 from scipy.optimize import minimize
+from datetime import datetime
+import yfinance as yf
 
 
 def heston_char(phi, S0, v0, kappa, theta, sigma, rho, lambd, tau, r):
@@ -50,7 +54,7 @@ def heston_char(phi, S0, v0, kappa, theta, sigma, rho, lambd, tau, r):
 
     exp1 = np.exp(r * phi * 1j * tau)
     term2 = S0**(phi * 1j) * ((1 - g * np.exp(d * tau)) / (1 - g))**(-2 * a / sigma**2)
-    exp2 = np.exp(a * tau * (b - rspi + d) / sigma**2) + v0 * (b - rspi + d) * ((1 - np.exp(d * tau)) / (1 - g * np.exp(d * tau))) / sigma**2
+    exp2 = np.exp(a * tau * (b - rspi + d) / sigma**2 + v0 * (b - rspi + d) * ((1 - np.exp(d * tau)) / (1 - g * np.exp(d * tau))) / sigma**2)
 
     return exp1 * term2 * exp2
 
@@ -68,8 +72,98 @@ def heston_integrand(phi, S0, v0, kappa, theta, sigma, rho, lambd, tau, r, K):
 def heston_price(S0, K, v0, kappa, theta, sigma, rho, lambd, tau, r):
     args = (S0, v0, kappa, theta, sigma, rho, lambd, tau, r, K)
 
-    integrated = np.real(quad(heston_integrand, 0, 100, args=args))
+    integrated, _ = np.real(quad(heston_integrand, 0, 100, args=args))
     return (S0 - K * np.exp(-r * tau)) / 2 + integrated / np.pi
+
+
+def get_call_information(ticker_symb: str) -> tuple[float, pd.DataFrame]:
+    '''
+    Step 0: Retrieve options from Yahoo finance into a dataframe, containing:
+    - expiration date,
+    - strike,
+    - price = (bid+ask)/2
+
+    Step 1: Generate a volatility surface dataframe with index=maturities, cols=strikes
+    Step 2: Melt the above to get a long list of options with cols maturities, strikes, price
+    Step 3: Generate a risk-free rate for each maturity via a yield curve (extra col)
+    '''
+
+    # Step 0: Handle to ticker object
+    tk = yf.Ticker(ticker_symb)
+
+    # Get most recent price
+    S0 = tk.history()['Close'].iloc[-1]
+
+    # Get option data
+    exps = tk.options  # Read possible expiration dates
+    options = []
+    for e in exps:
+        opt = tk.option_chain(e)
+        opt = opt.calls
+        opt['expiry_date'] = datetime.strptime(e, '%Y-%m-%d')
+        options.append(opt)
+
+    options = pd.concat(options, axis=0).reset_index()
+
+    options['maturity'] = (options['expiry_date'] - datetime.today()).dt.days / 365.25
+
+    options[['bid', 'ask', 'strike']] = options[['bid', 'ask', 'strike']].apply(pd.to_numeric)
+
+    options['price'] = options[['bid', 'ask']].apply(np.mean, axis=1)
+
+    # Steps 1 and 2: Volatility surface
+    vol_surface = options[['maturity', 'strike', 'price']]
+
+    # Step 3: Apply a yield curve to generate the risk-free rate applicable for each maturity
+    # TODO
+    vol_surface['rf'] = 0.03
+
+    return S0, vol_surface
+
+
+def fit_heston(vol_surface: pd.DataFrame, S0: float, rate_col_str='rate', strike_col_str='strike', maturity_col_str='maturity', price_col_str='price') -> dict:
+    r = vol_surface[rate_col_str]
+    K = vol_surface[strike_col_str]
+    tau = vol_surface[maturity_col_str]
+    P = vol_surface[price_col_str]
+
+    # Set up initial values and lower and upper bounds for each parameter
+    params = {
+        'v0': {'x0': 0.1, 'lbub': [1e-3, 0.1]},
+        'kappa': {'x0': 3, 'lbub': [1e-3, 5]},
+        'theta': {'x0': 0.05, 'lbub': [1e-3, 0.1]},
+        'sigma': {'x0': 0.3, 'lbub': [1e-2, 1]},
+        'rho': {'x0': -0.8, 'lbub': [-1, 0]},
+        'lambd': {'x0': 0.03, 'lbub': [-1, 1]}
+    }
+
+    x0 = [param['x0'] for _, param in params.items()]
+    bnds = [param['lbub'] for _, param in params.items()]
+
+    def _square_error(x):
+        v0, kappa, theta, sigma, rho, lambd = [param for param in x]
+
+        err = 0.0
+
+        for i in range(vol_surface.shape[0]):
+            err += (P[i] - heston_price(S0, K[i], v0, kappa, theta, sigma, rho, lambd, tau[i], r[i]))**2
+
+        return err / vol_surface.shape[0]
+
+    result = minimize(_square_error, x0, tol=1e-3, method='SLSQP', options={'maxiter': 1e4}, bounds=bnds)
+
+    v0, kappa, theta, sigma, rho, lambd = [param for param in result.x]
+
+    out = {
+        'v0': v0,
+        'kappa': kappa,
+        'theta': theta,
+        'sigma': sigma,
+        'rho': rho,
+        'lambd': lambd
+    }
+
+    return out
 
 
 # %% TEST FUNCTIONS
