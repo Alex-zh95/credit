@@ -115,7 +115,8 @@ def get_call_information(ticker_symb: str) -> tuple[float, pd.DataFrame]:
     vol_surface = options[['maturity', 'strike', 'price']]
 
     # Step 3: Apply a yield curve to generate the risk-free rate applicable for each maturity
-    # TODO
+    # TODO: yield curve now available via yields.py
+    # Need to fit a model to the yields to generate the required rate for each expiry
     vol_surface['rf'] = 0.03
 
     return S0, vol_surface
