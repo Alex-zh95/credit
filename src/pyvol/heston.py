@@ -40,6 +40,8 @@ from scipy.optimize import minimize
 from datetime import datetime
 import yfinance as yf
 
+from src.pyvol.yields import get_latest_yields
+
 
 def heston_char(phi, S0, v0, kappa, theta, sigma, rho, lambd, tau, r):
     '''
@@ -115,9 +117,8 @@ def get_call_information(ticker_symb: str) -> tuple[float, pd.DataFrame]:
     vol_surface = options[['maturity', 'strike', 'price']]
 
     # Step 3: Apply a yield curve to generate the risk-free rate applicable for each maturity
-    # TODO: yield curve now available via yields.py
-    # Need to fit a model to the yields to generate the required rate for each expiry
-    vol_surface['rf'] = 0.03
+    y_curve = get_latest_yields()
+    vol_surface['rf'] = vol_surface['maturity'].apply(y_curve)
 
     return S0, vol_surface
 
