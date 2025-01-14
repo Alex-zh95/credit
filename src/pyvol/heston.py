@@ -198,14 +198,15 @@ def heston_test():
     vol_surf = vol_surf[vol_surf['price'] > 0]
     resultHeston = fit_heston(vol_surf, S0)
 
-    print(resultHeston)
+    for key, item in resultHeston.items():
+        print(f'{key}: {item}')
 
 
 if __name__ == '__main__':
     print('Testing Heston pricer...')
     err = pricing_test()
 
-    print(f'Error code:     {err}')
+    print(f'Error code:     {err}\n\n')
 
     print('Testing Heston fitting via Python...')
     heston_test()
