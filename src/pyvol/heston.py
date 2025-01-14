@@ -123,11 +123,11 @@ def get_call_information(ticker_symb: str) -> tuple[float, pd.DataFrame]:
     return S0, vol_surface
 
 
-def fit_heston(vol_surface: pd.DataFrame, S0: float, rate_col_str='rate', strike_col_str='strike', maturity_col_str='maturity', price_col_str='price') -> dict:
-    r = vol_surface[rate_col_str]
-    K = vol_surface[strike_col_str]
-    tau = vol_surface[maturity_col_str]
-    P = vol_surface[price_col_str]
+def fit_heston(vol_surface: pd.DataFrame, S0: float, rate_col_str='rf', strike_col_str='strike', maturity_col_str='maturity', price_col_str='price') -> dict:
+    r = vol_surface[rate_col_str].values
+    K = vol_surface[strike_col_str].values
+    tau = vol_surface[maturity_col_str].values
+    P = vol_surface[price_col_str].values
 
     # Set up initial values and lower and upper bounds for each parameter
     params = {
@@ -190,8 +190,22 @@ def pricing_test() -> int:
     return 0 if np.abs(C - expected) / expected < 1e-3 else 1
 
 
+def heston_test():
+    '''
+    Tests to see run-through of the Heston fitting algorithm on new data.
+    '''
+    S0, vol_surf = get_call_information('AAPL')
+    vol_surf = vol_surf[vol_surf['price'] > 0]
+    resultHeston = fit_heston(vol_surf, S0)
+
+    print(resultHeston)
+
+
 if __name__ == '__main__':
     print('Testing Heston pricer...')
     err = pricing_test()
 
     print(f'Error code:     {err}')
+
+    print('Testing Heston fitting via Python...')
+    heston_test()
