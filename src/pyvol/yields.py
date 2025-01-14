@@ -58,4 +58,7 @@ def maturity_string_to_years(maturity_string: str) -> float | str:
 
 renamer = {maturity_cols[i]: maturity_string_to_years(maturity_cols[i]) for i in range(len(maturity_cols))}
 df = df.rename(columns=renamer)
-df.head()
+print(df.head())
+
+# To generate a smoothed yield curve, take the average over each of the maturities and then regress
+Y = df.mean(axis=0)
