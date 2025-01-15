@@ -159,9 +159,12 @@ std::unique_ptr<StVol::Underlying> StVol::market_calibration(
     }
 
     // Minimize the square error for calibration
+    nlopt::opt optimizer(nlopt::LD_SLSQP, initial_guess.size()); 
+
     // Opt technique selected COBYLA (Constrained Opt. By Lin. Apprx)
     // Adv: no derivative required, good for non-convex smooth problems
-    nlopt::opt optimizer(nlopt::LN_COBYLA, initial_guess.size()); 
+    // nlopt::opt optimizer(nlopt::LN_COBYLA, initial_guess.size()); 
+
     optimizer.set_min_objective(obj, &mdlData);
     optimizer.set_ftol_abs(1e-3);   // Tolerance
     optimizer.set_maxeval(1000);    // Maximum evaluation steps

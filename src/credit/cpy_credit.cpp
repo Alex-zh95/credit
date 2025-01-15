@@ -16,15 +16,22 @@ namespace py = pybind11;
 
 // Simplified accessor to get a default probability via training of Heston model on market data
 StVol::Underlying fit_Hst(
-    StVol::Underlying U0,
+    double S0,
     std::vector<double> Ks,
     std::vector<double> Ts,
     std::vector<double> Ps
 )
 {
     std::vector<StVol::HestonCallMdl> mdls;
+
     std::vector<double> initial_guess = {
-        U0.v0, U0.alpha, U0.vTheta, U0.vSig, U0.vLambda, U0.rho, U0.rf
+        0.1,    // v0
+        3.0,    // alpha
+        0.05,   // vTheta
+        0.03,   // vSig
+        0.03,   // vLambda
+        -0.8,   // vRho
+        0.03,   // rf
     };
 
     auto nOptions = Ks.size();
@@ -33,14 +40,14 @@ StVol::Underlying fit_Hst(
     for (decltype(nOptions) j = 0; j < nOptions; ++j)
     {
         auto _U = std::make_unique<StVol::Underlying>();
-        _U->S0 = U0.S0;
-        _U->v0 = U0.v0;
-        _U->alpha = U0.alpha;
-        _U->vTheta = U0.vTheta;
-        _U->vSig = U0.vSig;
-        _U->vLambda = U0.vLambda;
-        _U->rho = U0.rho;
-        _U->rf = U0.rf;
+        _U->S0 = S0;
+        _U->v0 = initial_guess[0];
+        _U->alpha = initial_guess[1];
+        _U->vTheta = initial_guess[2];
+        _U->vSig = initial_guess[3];
+        _U->vLambda = initial_guess[4];
+        _U->rho = initial_guess[5];
+        _U->rf = initial_guess[6];
 
         StVol::HestonCallMdl mdl(std::move(_U), Ks[j]);
         mdl.calc_option_price();
@@ -160,7 +167,7 @@ PYBIND11_MODULE(cpy_credit, m) {
         "fit_Hst",
         &fit_Hst,
         "Fit a Heston model to available call options data",
-        py::arg("U0"), py::arg("Ks"), py::arg("Ts"), py::arg("Ps")
+        py::arg("S0"), py::arg("Ks"), py::arg("Ts"), py::arg("Ps")
     );
 
     m.def(
