@@ -2,7 +2,7 @@
 Collect the most recent yield curves with smoothing.
 '''
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 import requests
@@ -118,15 +118,16 @@ def get_call_information(ticker_symb: str) -> tuple[float, pd.DataFrame]:
     for e in exps:
         opt = tk.option_chain(e)
         opt = opt.calls
-        opt['expiry_date'] = datetime.strptime(e, '%Y-%m-%d')
+
+        # Expiry dates appear to be offset by 1 day - noticed in testing and also see
+        # https://medium.com/@txlian13/webscrapping-options-data-with-python-and-yfinance-e4deb0124613
+        opt['expiry_date'] = datetime.strptime(e, '%Y-%m-%d') + timedelta(days=1)
         options.append(opt)
 
     options = pd.concat(options, axis=0).reset_index()
 
     options['maturity'] = (options['expiry_date'] - datetime.today()).dt.days / 365.25
-
     options[['bid', 'ask', 'strike']] = options[['bid', 'ask', 'strike']].apply(pd.to_numeric)
-
     options['price'] = options[['bid', 'ask']].apply(np.mean, axis=1)
 
     # Steps 1 and 2: Volatility surface
