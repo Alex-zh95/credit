@@ -42,11 +42,37 @@ Default can also be defined as the point at which a reinsurance contract would p
     - Taking $L \rightarrow 0$ yields a minimum rate on line (applicable if we are looking at very high excesses).
 - Incorporating the put option will allow for investment market sentiment in affecting risk load more dynamically.
     - We can start off by using underwriter-led rates on line, looking at available options for the types of investments desired evaluate and adjust back the risk load.
-    - 
 
 ## Volatility
 
-Volatility is hard to observe generally. Classic Black-Scholes implies constant volatility over the period of observation, which may not hold. To allow for volatility to be a stochastic quantity, use the Heston model or time series. A common time series implementation is the GARCH(1,1) model.
+Volatility is hard to observe generally. Classic Black-Scholes implies constant volatility over the period of observation, which may not hold. To allow for volatility to be a stochastic quantity, use the Heston model or time series. 
+
+Under the Heston model, the asset value and volatility process follow:
+
+$$dS_t = \mu S_t dt + \sqrt{v_t} S_t dB_t$$
+$$dv_t = \alpha(\theta - v_t) dt + \sigma \sqrt{v_t} dW_t$$
+$$\rho dt = dB_t dW_t$$
+
+where:
+
+- $S_t$ is the asset value process,
+- $\mu$ is the asset value drift,
+- $v_t$ is the volatility process,
+- $\theta$ is the long-term variance (asymptotic expected variance),
+- $\sigma$ is the volatility of variance (or volatility of volatility),
+- $\alpha$ is the mean reversion rate, i.e. rate of $\v_t \rightarrow \theta$,
+- $\rho$ is the correlation between the two standard Brownian motions $dB_t$ and $dW_t$.
+
+We would need to convert these quantities to risk-neutral measure, and via the Girsanov theorem, this is given by:
+
+$$\alpha^{\mathbb{Q}} = \alpha + \lambda$$
+$$\theta^{\mathbb{Q}} = \frac{\alpha \theta}{\alpha + \lambda}$$
+
+where $\lambda$ is the market price of volatility risk.
+
+The solution to this model can be obtained via Fourier transforms.
+
+A common time series implementation is the GARCH(1,1) model.
 
 ## References
 
