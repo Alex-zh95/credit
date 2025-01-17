@@ -123,7 +123,7 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
     std::vector<double> xVars = {0.1, 3.0, 0.05, 0.3, 0.03, -0.1};
 
     // Apply upper and lower bounds
-    std::vector<double> xUb = {0.1, 5, 0.1, 1, 1, 1};
+    std::vector<double> xUb = {0.5, 5, 0.1, 1, 1, 1};
     std::vector<double> xLb = {1e-3, 1e-3, 1e-3, 1e-2, -1, -1};
 
     // NLopt requires objective functions to use following signature:
