@@ -13,9 +13,6 @@ S0, vol_surf = get_call_information(symb)
 
 print(f'Spot price of {symb}:     {S0:,.2f}\n')
 
-# Remove any 0-options
-vol_surf = vol_surf[vol_surf['price'] > 0]
-vol_surf = vol_surf[vol_surf['maturity'] > 0]
 print('Snippet of volatility surface data:')
 print(vol_surf.head())
 
@@ -30,3 +27,8 @@ print(f'Vol of vol (sigma):             {pyV.vSig:,.5f}')
 print(f'Markt price of vol (lambda):    {pyV.vLambda:,.5f}')
 print(f'Price/vol corr (rho):           {pyV.rho:,.5f}')
 print('\n')
+
+# Using the fitted results, calculate the probability of exercising the option if current
+# value of underlying increases by risk-free rate within 1 year.
+pCall = cc.get_Heston_default_probability(pyV, S0 * (1 + vol_surf['rf'].iloc[0]))
+print(f'RN Prob of exercise:            {pCall:,.5f}')
