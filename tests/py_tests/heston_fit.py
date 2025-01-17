@@ -13,6 +13,8 @@ S0, vol_surf = get_call_information(symb)
 
 print(f'Spot price of {symb}:     {S0:,.2f}\n')
 
+# Remove 0-prices
+vol_surf = vol_surf[vol_surf['price'] > 0]
 print('Snippet of volatility surface data:')
 print(vol_surf.head())
 
