@@ -140,17 +140,25 @@ namespace StVol
         double P;
     };
 
-    /* @Description: Calibrate a Heston model to market data of traded call options. 
+    /* @Description: Calibrate a Heston model to market data of traded call options.
+     * 
+     * Minimize the square error between Heston-implied prices against market prices.
      *
-     * Method involves optimizing the square error function of expected and observed Heston call prices against market data.
-     *
-     * @Params:     std::vector<HestonCallMdl>& hMdls:  Vector of market-traded call options
+     * @Params:     double spot_price:                  Current price of asset
+     *              std::vector<double> strikes:        Vector of strike prices for options
+     *              std::vector<double> r:              Vector of risk-free rates
+     *              std::vector<double> maturities:     Vector of option durations
      *              std::vector<double> market_prices:  Prices of those call options
-     *              std::vector<double> initial_guess:  Initial estimate of values
      *
-     * @Returns:    std::unique_ptr<Underlying>:        Optimized underlying parameters for the Heston model.
+     * @Returns:    std::unique_ptr<Underlying>:        Optimized underlying parameters
      */
-    std::unique_ptr<Underlying> market_calibration(std::vector<HestonCallMdl>& hMdls, const std::vector<double> market_prices, std::vector<double> initial_guess);
+    std::unique_ptr<Underlying> fitHeston(
+        double spot_price,
+        std::vector<double> strikes,
+        std::vector<double> r,
+        std::vector<double> maturities,
+        std::vector<double> market_prices
+    );
 } // namespace StVol
 
 #endif // STVOL_HPP

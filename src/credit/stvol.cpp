@@ -86,112 +86,95 @@ double StVol::HestonCallMdl::get_rn_exercise_probability()
     return (0.5 + M_1_PI * integrated);
 }
 
-std::unique_ptr<StVol::Underlying> StVol::market_calibration(
-    std::vector<HestonCallMdl>& hMdls, 
-    const std::vector<double> market_prices,
-    std::vector<double> initial_guess
-)
+
+std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vector<double> strikes, std::vector<double> r, std::vector<double> maturities, std::vector<double> market_prices)
 {
-    // Define a separate struct to simplify loading fixed data
-    struct ExtData 
+    const auto nCalls = market_prices.size();
+
+    // Extract the available volatility surface and set into parameters
+    struct Params
     {
-        double S0;
-        std::vector<double> rf;
-        std::vector<double> strike;
+        std::vector<double> K;
         std::vector<double> t;
-        std::vector<double> mdlPrices;
-        std::vector<double> expPrices;
+        std::vector<double> P;
+        std::vector<double> rf;
+        double S0;
+
     };
 
-    // NLopt requires objective functions to have following signature
-    // Use the void* data part to pass in necessary data for expected and observed
-    auto obj = [](const std::vector<double> &x, std::vector<double> &grad, void *data)
+    Params params;
+    
+    params.K.reserve(nCalls);
+    params.t.reserve(nCalls);
+    params.P.reserve(nCalls);
+    params.rf.reserve(nCalls);
+
+    for (size_t i = 0; i < nCalls; ++i)
     {
-        // Cast the void ptr to data
-        auto* extData = static_cast<ExtData*>(data);
-        const auto n_obs = extData->mdlPrices.size();
-        auto err = 0.0;
-        
-        for (size_t j = 0; j < n_obs; ++j)
+        params.K.push_back(strikes.at(i));
+        params.t.push_back(maturities.at(i));
+        params.P.push_back(market_prices.at(i));
+        params.rf.push_back(r.at(i));
+    }
+
+    params.S0 = spot_price;
+
+    // Set up the variables to optimize in a vector, with the following order:
+    // v0, alpha, vTheta, vSig, vLambda, rho
+    std::vector<double> xVars = {0.1, 3.0, 0.05, 0.3, 0.03, -0.1};
+
+    // NLopt requires objective functions to use following signature:
+    // (const std::vector<double> &x, std::vector<double> &grad, void *data)
+    // with x being the input vars to optimize, grad = gradient and data containing params
+    auto square_err = [](const std::vector<double> &x, std::vector<double> &grad, void *data)
+    {
+        auto error = 0.0;
+
+        // Cast void ptr to Params struct
+        auto* parameters = static_cast<Params*>(data);
+
+        // Iterate and count the errors
+        const auto nOptions = parameters->P.size();
+        for (size_t i = 0; i < nOptions; ++i)
         {
+            auto curActualPrice = parameters->P.at(i);
+            auto curStrike = parameters->K.at(i);
+            auto curMaturity = parameters->t.at(i);
+
             auto U = std::make_unique<StVol::Underlying>();
+            U->S0 = parameters->S0;
+            U->v0 = x[0];
+            U->alpha = x[1];
+            U->vTheta = x[2];
+            U->vSig = x[3];
+            U->vLambda = x[4];
+            U->rho = x[5];
+            U->rf = parameters->rf.at(i);
 
-            // Fixed params
-            U->S0 = extData->S0;
-
-            // Optimization variables to pack into U-> members
-            // Note: Structured bindings such as below are not permitted
-            // [U->v0, U->alpha, U->vTheta, U->vSig, U->vLambda, U->rho] = x;
-            // Instead use pointer-based loop to get around this
-            std::vector<double*> U_elems = {&U->v0, &U->alpha, &U->vTheta, &U->vSig, &U->vLambda, &U->rho, &U->rf};
-
-            for (size_t k = 0; k < U_elems.size(); ++k)
-                *U_elems[k] = x[k];
-
-            auto strike = extData->strike[j];
-            auto t = extData->t[j];
-
-            // Create Heston Model and evaluate the model price
-            StVol::HestonCallMdl mdl(std::move(U), strike, t);
+            StVol::HestonCallMdl mdl(std::move(U), curStrike, curMaturity);
             mdl.calc_option_price();
-            extData->mdlPrices[j] = mdl.get_option_price();
 
-            err += pow(extData->mdlPrices[j] - extData->expPrices[j], 2) / n_obs;
+            error += pow(curActualPrice - mdl.get_option_price(), 2);
         }
 
-        return err;
+        return (error / nOptions);
     };
 
-    // Prepare the data for optimization
-    ExtData mdlData = {
-        .S0 = hMdls[0].get_underlying().S0,
-        .expPrices = market_prices
-    };
+    nlopt::opt optimizer(nlopt::LD_SLSQP, xVars.size());
+    optimizer.set_min_objective(square_err, &params);
+    optimizer.set_xtol_abs(1e-3);
+    optimizer.set_maxeval(1e4);
 
-    for (size_t j = 0; j < hMdls.size(); ++j)
-    {
-        mdlData.strike.push_back(hMdls[j].get_strike()) ;
-        mdlData.t.push_back(hMdls[j].get_maturity());
-        mdlData.rf.push_back(hMdls[j].get_underlying().rf);
+    optimizer.optimize(xVars);
 
-        hMdls[j].calc_option_price();
-        mdlData.mdlPrices.push_back(hMdls[j].get_option_price());
-    }
-
-    // Minimize the square error for calibration
-    nlopt::opt optimizer(nlopt::LD_SLSQP, initial_guess.size()); 
-
-    // Opt technique selected COBYLA (Constrained Opt. By Lin. Apprx)
-    // Adv: no derivative required, good for non-convex smooth problems
-    // nlopt::opt optimizer(nlopt::LN_COBYLA, initial_guess.size()); 
-
-    optimizer.set_min_objective(obj, &mdlData);
-    optimizer.set_ftol_abs(1e-3);   // Tolerance
-    optimizer.set_maxeval(1000);    // Maximum evaluation steps
-    optimizer.set_maxtime(5.0);     // Max time in case we get stuck
-
-    auto opt_code = 0;
-
-    try
-    {
-        auto opt_code = optimizer.optimize(initial_guess);
-    }
-    catch (std::exception& e)
-    {
-        std::cout << "Optimizer result code: " << opt_code << "\n\n";
-        std::cerr << "NLopt error: " << e.what() << "\n\n";
-    }
-
-    // Tidy the result by putting it into a new Underlying object
     auto result = std::make_unique<StVol::Underlying>();
-    result->S0 = mdlData.S0;
-    result->v0 = initial_guess[0];
-    result->alpha = initial_guess[1];
-    result->vTheta = initial_guess[2];
-    result->vSig = initial_guess[3];
-    result->vLambda = initial_guess[4];
-    result->rho = initial_guess[5];
-    result->rf = initial_guess[6];
-
+    result->S0 = spot_price;
+    result->v0 = xVars[0];
+    result->alpha = xVars[1];
+    result->vTheta = xVars[2];
+    result->vSig = xVars[3];
+    result->vLambda = xVars[4];
+    result->rho = xVars[5];
+    result->rf = r.at(0);
     return result;
 }
