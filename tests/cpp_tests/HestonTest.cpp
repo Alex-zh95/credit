@@ -24,7 +24,7 @@ bool test_Heston_pricing()
     std::cout << "Risk-free rate:        " << U->rf << "\n";
     std::cout << "Mean-reversion rate:   " << U->alpha << "\n";
     std::cout << "Long-term mean var:    " << U->vTheta << "\n";
-    std::cout << "Volatility volatility: " << U->vSig << "\n";
+    std::cout << "Vol of vol:            " << U->vSig << "\n";
     std::cout << "Market price of vol:   " << U->vLambda << "\n";
     std::cout << "Correlation vol/price: " << U->rho << "\n";
 

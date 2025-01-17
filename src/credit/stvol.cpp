@@ -2,7 +2,6 @@
 #include <complex>
 #include <cstddef>
 #include <memory>
-#include <iostream>
 
 using std::pow;
 using std::exp;
@@ -123,6 +122,10 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
     // v0, alpha, vTheta, vSig, vLambda, rho
     std::vector<double> xVars = {0.1, 3.0, 0.05, 0.3, 0.03, -0.1};
 
+    // Apply upper and lower bounds
+    std::vector<double> xUb = {0.1, 5, 0.1, 1, 1, 1};
+    std::vector<double> xLb = {1e-3, 1e-3, 1e-3, 1e-2, -1, -1};
+
     // NLopt requires objective functions to use following signature:
     // (const std::vector<double> &x, std::vector<double> &grad, void *data)
     // with x being the input vars to optimize, grad = gradient and data containing params
@@ -160,12 +163,17 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
         return (error / nOptions);
     };
 
-    nlopt::opt optimizer(nlopt::LD_SLSQP, xVars.size());
+    // As we do not provide a gradient, require a deriv-free algo as no fd-approx implemented
+    // nlopt::opt optimizer(nlopt::LN_COBYLA, xVars.size());
+    nlopt::opt optimizer(nlopt::LN_NELDERMEAD, xVars.size());
     optimizer.set_min_objective(square_err, &params);
     optimizer.set_xtol_abs(1e-3);
     optimizer.set_maxeval(1e4);
+    optimizer.set_upper_bounds(xUb);
+    optimizer.set_lower_bounds(xLb);
 
-    optimizer.optimize(xVars);
+    double minf;
+    optimizer.optimize(xVars, minf);
 
     auto result = std::make_unique<StVol::Underlying>();
     result->S0 = spot_price;
