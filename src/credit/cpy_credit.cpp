@@ -11,11 +11,11 @@ namespace py = pybind11;
 #include "stvol.hpp"
 
 /* C++ Interfaces for StVol::HestonCallMdl 
- * This is due to not being able to pass std::unique_ptr<...> as arguments as Python does not implement such concepts.
+ * This is due to not being able to pass std::unique_ptr<...> as arguments as Python does not 
+ * implement such concepts.
  */
 
-// Simplified accessor to get a default probability via training of Heston model on market data
-double get_Hst_call_price(
+double get_Heston_call_price(
     StVol::Underlying U0,
     double strike,
     double t = 1
@@ -37,7 +37,7 @@ double get_Hst_call_price(
     return mdl.get_option_price();
 }
 
-double get_Hst_default_probability(
+double get_Heston_default_probability(
     StVol::Underlying U_fitted,
     double strike
 )
@@ -125,15 +125,15 @@ PYBIND11_MODULE(cpy_credit, m) {
     );
 
     m.def(
-        "get_Hst_default_probability",
-        &get_Hst_default_probability,
+        "get_Heston_default_probability",
+        &get_Heston_default_probability,
         "Attain risk-neutral default probability (Heston).",
         py::arg("U_fitted"), py::arg("strike")
     );
 
     m.def(
-        "get_Hst_call_price",
-        &get_Hst_call_price,
+        "get_Heston_call_price",
+        &get_Heston_call_price,
         "Calculate price of a European vanilla call option under Heston model.",
         py::arg("U0"), py::arg("strike"), py::arg("t") = 1.0
     );
