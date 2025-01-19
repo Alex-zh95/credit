@@ -149,6 +149,7 @@ namespace StVol
      *              std::vector<double> r:              Vector of risk-free rates
      *              std::vector<double> maturities:     Vector of option durations
      *              std::vector<double> market_prices:  Prices of those call options
+     *              std::vector<double> trade_volumes:  Volume of options traded.
      *
      * @Returns:    std::unique_ptr<Underlying>:        Optimized underlying parameters
      */
@@ -157,7 +158,8 @@ namespace StVol
         std::vector<double> strikes,
         std::vector<double> r,
         std::vector<double> maturities,
-        std::vector<double> market_prices
+        std::vector<double> market_prices,
+        std::vector<double> trade_volumes
     );
 } // namespace StVol
 

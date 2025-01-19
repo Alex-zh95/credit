@@ -121,7 +121,7 @@ PYBIND11_MODULE(cpy_credit, m) {
         "fit_Heston",
         &StVol::fitHeston,
         "Fit a Heston model to available call options data",
-        py::arg("S0"), py::arg("Ks"), py::arg("rfs") ,py::arg("Ts"), py::arg("Ps")
+        py::arg("S0"), py::arg("Ks"), py::arg("rfs") ,py::arg("Ts"), py::arg("Ps"), py::arg("Volumes")
     );
 
     m.def(

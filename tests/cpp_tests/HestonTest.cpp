@@ -52,8 +52,9 @@ void basic_Heston_calibration_test()
     std::vector<double> Ks = {115, 120, 130, 115, 185};
     std::vector<double> Ps = {113.4, 108.4, 98.4, 114.6, 44.5};
     std::vector<double> Rfs = {0.0446, 0.0446, 0.0446, 0.0444, 0.0443};
+    std::vector<double> trade_vols(Ps.size(), 1);       // Take the number of elements for Ps and write 1 in each
 
-    auto U = StVol::fitHeston(S0, Ks, Rfs, Tau, Ps);
+    auto U = StVol::fitHeston(S0, Ks, Rfs, Tau, Ps, trade_vols);
     std::cout << "Spot price:            " << U->S0 << "\n";
     std::cout << "Spot volatility:       " << U->v0 << "\n";
     std::cout << "Risk-free rate:        " << U->rf << "\n";

@@ -19,7 +19,7 @@ print('Snippet of volatility surface data:')
 print(vol_surf.head())
 
 # Fit Heston model in C++
-pyV = cc.fit_Heston(S0, vol_surf['strike'].values, vol_surf['rf'].values, vol_surf['maturity'].values, vol_surf['price'].values)
+pyV = cc.fit_Heston(S0, vol_surf['strike'].values, vol_surf['rf'].values, vol_surf['maturity'].values, vol_surf['price'].values, vol_surf['volume'].values)
 
 print('\nFit results (C++):')
 print(f'Spot volatility (v0):           {pyV.v0:,.5f}')

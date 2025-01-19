@@ -103,7 +103,7 @@ def get_call_information(ticker_symb: str) -> tuple[float, pd.DataFrame]:
         Spot value of ticker.
 
     vol_surface: pd.DataFrame:
-        Options data with columns ('maturity', 'strike', 'price', 'rf').
+        Options data with columns ('maturity', 'strike', 'price', 'rf', 'volume').
     '''
 
     # Step 0: Handle to ticker object
@@ -112,9 +112,9 @@ def get_call_information(ticker_symb: str) -> tuple[float, pd.DataFrame]:
     # Get most recent price
     S0 = tk.history()['Close'].iloc[-1]
 
-    # Get option data
+    # Steps 1 and 2: Get option data and build volatility surface data
     exps = tk.options  # Read possible expiration dates
-    options = []
+    vol_surface = []
     for e in exps:
         opt = tk.option_chain(e)
         opt = opt.calls
@@ -122,19 +122,16 @@ def get_call_information(ticker_symb: str) -> tuple[float, pd.DataFrame]:
         # Expiry dates appear to be offset by 1 day - noticed in testing and also see
         # https://medium.com/@txlian13/webscrapping-options-data-with-python-and-yfinance-e4deb0124613
         opt['expiry_date'] = datetime.strptime(e, '%Y-%m-%d') + timedelta(days=1)
-        options.append(opt)
+        vol_surface.append(opt)
 
-    options = pd.concat(options, axis=0).reset_index()
+    vol_surface = pd.concat(vol_surface, axis=0).reset_index()
 
-    options['maturity'] = (options['expiry_date'] - datetime.today()).dt.days / 365.25
-    options[['bid', 'ask', 'strike']] = options[['bid', 'ask', 'strike']].apply(pd.to_numeric)
-    options['price'] = options[['bid', 'ask']].apply(np.mean, axis=1)
-
-    # Steps 1 and 2: Volatility surface
-    vol_surface = options[['maturity', 'strike', 'price']]
+    vol_surface['maturity'] = (vol_surface['expiry_date'] - datetime.today()).dt.days / 365.25
+    vol_surface[['bid', 'ask', 'strike']] = vol_surface[['bid', 'ask', 'strike']].apply(pd.to_numeric)
+    vol_surface['price'] = vol_surface[['bid', 'ask']].apply(np.mean, axis=1)
 
     # Step 3: Apply a yield curve to generate the risk-free rate applicable for each maturity
     y_curve = get_latest_yields()
     vol_surface['rf'] = vol_surface['maturity'].apply(y_curve)
 
-    return S0, vol_surface
+    return S0, vol_surface[['maturity', 'strike', 'price', 'rf', 'volume']]

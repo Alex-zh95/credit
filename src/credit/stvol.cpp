@@ -86,7 +86,7 @@ double StVol::HestonCallMdl::get_rn_exercise_probability()
 }
 
 
-std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vector<double> strikes, std::vector<double> r, std::vector<double> maturities, std::vector<double> market_prices)
+std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vector<double> strikes, std::vector<double> r, std::vector<double> maturities, std::vector<double> market_prices, std::vector<double> trade_volumes)
 {
     const auto nCalls = market_prices.size();
 
@@ -97,6 +97,7 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
         std::vector<double> t;
         std::vector<double> P;
         std::vector<double> rf;
+        std::vector<double> volume;
         double S0;
 
     };
@@ -107,6 +108,7 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
     params.t.reserve(nCalls);
     params.P.reserve(nCalls);
     params.rf.reserve(nCalls);
+    params.volume.reserve(nCalls);
 
     for (size_t i = 0; i < nCalls; ++i)
     {
@@ -114,6 +116,7 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
         params.t.push_back(maturities.at(i));
         params.P.push_back(market_prices.at(i));
         params.rf.push_back(r.at(i));
+        params.volume.push_back(trade_volumes.at(i));
     }
 
     params.S0 = spot_price;
@@ -138,11 +141,13 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
 
         // Iterate and count the errors
         const auto nOptions = parameters->P.size();
+        auto total_volume = 0.0;
         for (size_t i = 0; i < nOptions; ++i)
         {
             auto curActualPrice = parameters->P.at(i);
             auto curStrike = parameters->K.at(i);
             auto curMaturity = parameters->t.at(i);
+            auto curVolume = parameters->t.at(i);
 
             auto U = std::make_unique<StVol::Underlying>();
             U->S0 = parameters->S0;
@@ -157,10 +162,11 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
             StVol::HestonCallMdl mdl(std::move(U), curStrike, curMaturity);
             mdl.calc_option_price();
 
-            error += pow(curActualPrice - mdl.get_option_price(), 2);
+            error += pow(curActualPrice - mdl.get_option_price(), 2) * curVolume;
+            total_volume += curVolume;
         }
 
-        return (error / nOptions);
+        return (error / total_volume);
     };
 
     // As we do not provide a gradient, require a deriv-free algo as no fd-approx implemented
