@@ -1,6 +1,6 @@
 [project]
 name = "credit"
-version = "0.1.0"
+version = "0.2.0"
 description = "Library analyzing credit and insurance default."
 authors = [
     {name = "chu", email = "zh.c.l.z.95@gmail.com"},
@@ -20,7 +20,7 @@ dependencies = [
     "bs4>=0.0.2",
     "nelson-siegel-svensson>=0.5.0",
 ]
-requires-python = "<=3.12"
+requires-python = "==3.12"
 readme = "README.md"
 license = {text = "MIT"}
 
