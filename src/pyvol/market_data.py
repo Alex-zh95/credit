@@ -134,4 +134,4 @@ def get_call_information(ticker_symb: str) -> tuple[float, pd.DataFrame]:
     y_curve = get_latest_yields()
     vol_surface['rf'] = vol_surface['maturity'].apply(y_curve)
 
-    return S0, vol_surface[['maturity', 'strike', 'price', 'rf', 'volume']]
+    return S0, vol_surface[['maturity', 'strike', 'price', 'rf', 'volume', 'impliedVolatility', 'inTheMoney']]
