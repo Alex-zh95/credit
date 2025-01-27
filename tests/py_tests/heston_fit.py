@@ -7,7 +7,7 @@ from src.pyvol import cpy_credit as cc
 from src.pyvol.market_data import get_call_information
 
 # Get latest share information and collection of live traded options
-symb = 'AAPL'
+symb = 'CCJ'
 print(f'Getting information on {symb}')
 S0, vol_surf = get_call_information(symb)
 
@@ -15,6 +15,7 @@ print(f'Spot price of {symb}:     {S0:,.2f}\n')
 
 # Remove 0-prices
 vol_surf = vol_surf[vol_surf['price'] > 0]
+vol_surf = vol_surf.dropna()
 print('Snippet of volatility surface data:')
 print(vol_surf.head())
 
