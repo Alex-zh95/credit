@@ -151,12 +151,12 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
 
             auto U = std::make_unique<StVol::Underlying>();
             U->S0 = parameters->S0;
-            U->v0 = x[0];
-            U->alpha = x[1];
-            U->vTheta = x[2];
-            U->vSig = x[3];
-            U->vLambda = x[4];
-            U->rho = x[5];
+            U->v0 = x.at(0);
+            U->alpha = x.at(1);
+            U->vTheta = x.at(2);
+            U->vSig = x.at(3);
+            U->vLambda = x.at(4);
+            U->rho = x.at(5);
             U->rf = parameters->rf.at(i);
 
             StVol::HestonCallMdl mdl(std::move(U), curStrike, curMaturity);
@@ -170,7 +170,6 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
     };
 
     // As we do not provide a gradient, require a deriv-free algo as no fd-approx implemented
-    // nlopt::opt optimizer(nlopt::LN_COBYLA, xVars.size());
     nlopt::opt optimizer(nlopt::LN_NELDERMEAD, xVars.size());
     optimizer.set_min_objective(square_err, &params);
     optimizer.set_xtol_abs(1e-3);
@@ -183,12 +182,12 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
 
     auto result = std::make_unique<StVol::Underlying>();
     result->S0 = spot_price;
-    result->v0 = xVars[0];
-    result->alpha = xVars[1];
-    result->vTheta = xVars[2];
-    result->vSig = xVars[3];
-    result->vLambda = xVars[4];
-    result->rho = xVars[5];
+    result->v0 = xVars.at(0);
+    result->alpha = xVars.at(1);
+    result->vTheta = xVars.at(2);
+    result->vSig = xVars.at(3);
+    result->vLambda = xVars.at(4);
+    result->rho = xVars.at(5);
     result->rf = r.at(0);
     return result;
 }
