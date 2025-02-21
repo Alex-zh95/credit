@@ -3,8 +3,8 @@
 # import numpy as np
 # import pandas as pd
 
-from src.pyvol import cpy_credit as cc
-from src.pyvol.market_data import get_call_information
+from pyvol import cpy_credit as cc
+from pyvol.market_data import get_call_information
 
 # Get latest share information and collection of live traded options
 symb = 'CCJ'
