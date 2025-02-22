@@ -109,8 +109,8 @@ def get_call_information(ticker_symb: str) -> tuple[float, pd.DataFrame]:
     # Step 0: Handle to ticker object
     tk = yf.Ticker(ticker_symb)
 
-    # Get most recent price
-    S0 = tk.history()['Close'].iloc[-1]
+    # Get most recent price - limit the data download to 5 days
+    S0 = tk.history(period='5d')['Close'].iloc[-1]
 
     # Steps 1 and 2: Get option data and build volatility surface data
     exps = tk.options  # Read possible expiration dates
