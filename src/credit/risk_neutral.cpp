@@ -11,10 +11,6 @@ using boost::math::normal;
 #include "template_utils.hpp"
 #include "risk_neutral.hpp"
 
-#ifndef TOL
-#define TOL 1e-6
-#endif
-
 std::tuple<double, double, double> vanilla_option_price(
     const double S0,
     const double K,

@@ -6,6 +6,8 @@
 #include <vector>
 #include <tuple>
 
+#include "template_utils.hpp"
+
 /* @Description:    Calculate the vanilla option price via the Black-Scholes equation, using the provided inputs:
  *
  * @Params:         double S0:          Current price of underlying
@@ -86,7 +88,8 @@ double get_asset_volatility(
     const double L,
     const double r,
     const double t = 1,
-    const int n_iter = 50);
+    const int n_iter = N_ITER
+);
 
 /* @Description:    Calculate risk-neutral probability of default under Merton model.
  *

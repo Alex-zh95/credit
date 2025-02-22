@@ -1,20 +1,30 @@
 #ifndef TEMPLATE_UTILS_H
 #define TEMPLATE_UTILS_H
+
 /* @Filename:        template_utils.hpp
  * @Description:     Generic templated functions/solvers.
  */
+
+ // Useful consts such as tolerances
+ #ifndef TOL
+ #define TOL 1e-3
+ #endif
+
+ #ifndef N_ITER
+ #define N_ITER 50
+ #endif
 
 /* @Description:    Root solver via the secant method.
  *
  * @Params:         Func& f:            Equation to solve for roots
  *                  T x0:               Initial guess for the function root
- *                  T tol = 1e-8:       Tolerance level - stop if reached
+ *                  T tol = 1e-3:       Tolerance level - stop if reached
  *                  int n_iter = 50:    Maximum number of iterations before finishing
  *
  * @Returns:        T x:                Root solution
  */
 template <typename Func, typename T>
-T secant_root(Func &&f, T x0, T tol = 1e-8, int n_iter = 50)
+T secant_root(Func &&f, T x0, T tol = TOL, int n_iter = N_ITER)
 {
     // Define a neighborhood around the initial value x0
     auto x1 = x0 / 2;

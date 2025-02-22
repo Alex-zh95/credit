@@ -15,6 +15,7 @@ using boost::math::quadrature::trapezoidal;
 #include <nlopt.hpp>
 
 #include "stvol.hpp"
+#include "template_utils.hpp"
 
 std::complex<double> StVol::HestonCallMdl::charFn(std::complex<double> phi)
 {
