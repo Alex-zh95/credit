@@ -173,7 +173,7 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
     // As we do not provide a gradient, require a deriv-free algo as no fd-approx implemented
     nlopt::opt optimizer(nlopt::LN_NELDERMEAD, xVars.size());
     optimizer.set_min_objective(square_err, &params);
-    optimizer.set_xtol_abs(1e-3);
+    optimizer.set_xtol_abs(TOL);
     optimizer.set_maxeval(1e4);
     optimizer.set_upper_bounds(xUb);
     optimizer.set_lower_bounds(xLb);
@@ -190,5 +190,117 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
     result->vLambda = xVars.at(4);
     result->rho = xVars.at(5);
     result->rf = r.at(0);
+    return result;
+}
+
+
+std::unique_ptr<StVol::Underlying> HestonAssetVolatilitySimulated(StVol::HestonCallMdl& mdl, double asset, double debt, double maturity)
+{
+    /* TODO:
+     *
+     * We want to implement a function that converts equity volatility into asset
+     * volatility, in a similar vein to how the Merton model did this.
+     *
+     * We cannot use the direct relationship of sig_E * E = Delta * sig_A * A
+     *
+     * because volatility itself is stochastic here, as well as the E and A parts.
+     *
+     * We will make use of simulations here to do this, which will be more
+     * computationally taxing but we use the power of C++ here. If possible we 
+     * will also explore parallelization techniques but this might be difficult
+     * if the process overall is iterative like it already is for Merton.
+     *
+     * Idea to implement here:
+     *
+     * - we use Heston to imply the equity value just as in Merton,
+     * - from market data, we already have equity value, asset value and 
+     *   the Heston model already calibrated to attain implied vol surface (equity),
+     * 
+     * Hence we will need as inputs:
+     *
+     * - a reference to a Heston Mdl object for equity
+     * - information on asset (asset price (underlying), debt (strike))
+     * 
+     * The steps reqired therefore are:
+     *
+     * - forward solving of the Heston model to attain a price of equity, using asset price etc.
+     * - compare this price of equity against the actual equity, i.e. mdl->get_underlying.S0
+     *- minimize the square error here in a similar vein to HestonFit to parametrize the Heston parameters
+     */
+
+    // Variables to optimize in a vetor, with following order:
+    // v0, alpha, vTheta, vSig, vLambda, rho
+    std::vector<double> xVars = {
+        mdl.get_underlying().v0,
+        mdl.get_underlying().alpha,
+        mdl.get_underlying().vTheta,
+        mdl.get_underlying().vSig,
+        mdl.get_underlying().vLambda,
+        mdl.get_underlying().rho
+    };
+
+    // Apply upper and lower bounds
+    std::vector<double> xUb = {0.5, 5, 0.1, 1, 1, 1};
+    std::vector<double> xLb = {1e-3, 1e-3, 1e-3, 1e-2, -1, -1};
+
+    // Parameters
+    struct Params
+    {
+        double A0;
+        double debt;
+        double maturity;
+        double actualEquity;
+        double rf;
+    };
+
+    Params params;
+
+    params.A0 = asset;
+    params.debt = debt;
+    params.maturity = maturity;
+    params.actualEquity = mdl.get_underlying().S0;
+    params.rf = mdl.get_underlying().rf;
+
+    auto square_err = [](const std::vector<double> &x, std::vector<double> &grad, void* data)
+    {
+        auto* parameters = static_cast<Params*>(data);
+
+        auto MertonUnderlying = std::make_unique<StVol::Underlying>();
+        MertonUnderlying->S0 = parameters->A0;
+        MertonUnderlying->v0 = x.at(0);
+        MertonUnderlying->alpha = x.at(1);
+        MertonUnderlying->vTheta = x.at(2);
+        MertonUnderlying->vSig = x.at(3);
+        MertonUnderlying->vLambda = x.at(4);
+        MertonUnderlying->rho = x.at(5);
+        MertonUnderlying->rf = parameters->rf;
+        
+        StVol::HestonCallMdl HestonMerton(std::move(MertonUnderlying), parameters->debt, parameters->maturity);
+
+        HestonMerton.calc_option_price();
+        auto calcEquity = HestonMerton.get_option_price();
+
+        return pow(calcEquity - parameters->actualEquity, 2);
+    };
+
+    nlopt::opt optimizer(nlopt::LN_NELDERMEAD, xVars.size());
+    optimizer.set_min_objective(square_err, &params);
+    optimizer.set_xtol_abs(TOL);
+    optimizer.set_maxeval(1e4);
+    optimizer.set_upper_bounds(xUb);
+    optimizer.set_lower_bounds(xLb);
+
+    double minf;
+    optimizer.optimize(xVars, minf);
+
+    auto result = std::make_unique<StVol::Underlying>();
+    result->S0 = asset;             // Asset price
+    result->v0 = xVars.at(0);       // Spot asset volatility
+    result->alpha = xVars.at(1);    // Mean reversion rate
+    result->vTheta = xVars.at(2);   // Long-term asset volatility
+    result->vSig = xVars.at(3);     // Volatility of asset volatility
+    result->vLambda = xVars.at(4);  // Market price of asset volatility
+    result->rho = xVars.at(5);      // Asset price to volatility correlation
+    result->rf = params.rf;         // Risk-free rate
     return result;
 }
