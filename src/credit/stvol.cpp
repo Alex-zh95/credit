@@ -148,7 +148,7 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
             auto curActualPrice = parameters->P.at(i);
             auto curStrike = parameters->K.at(i);
             auto curMaturity = parameters->t.at(i);
-            auto curVolume = parameters->t.at(i);
+            auto curVolume = parameters->volume.at(i);
 
             auto U = std::make_unique<StVol::Underlying>();
             U->S0 = parameters->S0;
