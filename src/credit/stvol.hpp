@@ -161,6 +161,13 @@ namespace StVol
         std::vector<double> market_prices,
         std::vector<double> trade_volumes
     );
+
+    std::unique_ptr<StVol::Underlying> HestonAssetVolatilitySimulated(
+        StVol::HestonCallMdl& mdl,
+        double asset,
+        double debt,
+        double maturity
+    );
 } // namespace StVol
 
 #endif // STVOL_HPP

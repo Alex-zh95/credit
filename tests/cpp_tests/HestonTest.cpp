@@ -44,6 +44,34 @@ bool test_Heston_pricing()
     return (std::abs(error) < 1e-3);
 }
 
+void test_Heston_asset_vol()
+{
+    auto U = std::make_unique<StVol::Underlying>();
+    U->S0 = 100.;
+    U->v0 = 0.1;
+    U->rf = 0.03;
+    U->alpha = 1.5768;
+    U->vTheta = 0.0398;
+    U->vSig = 0.3;
+    U->vLambda = 0.575;
+    U->rho = -0.5711;
+
+    auto strike = 100.;
+    
+    StVol::HestonCallMdl mdl(std::move(U), strike);
+
+    auto V = StVol::HestonAssetVolatilitySimulated(mdl, 150., 50., 1.5);
+
+    std::cout << "Spot price:            " << V->S0 << "\n";
+    std::cout << "Spot volatility:       " << V->v0 << "\n";
+    std::cout << "Risk-free rate:        " << V->rf << "\n";
+    std::cout << "Mean-reversion rate:   " << V->alpha << "\n";
+    std::cout << "Long-term mean var:    " << V->vTheta << "\n";
+    std::cout << "Volatility volatility: " << V->vSig << "\n";
+    std::cout << "Market price of vol:   " << V->vLambda << "\n";
+    std::cout << "Correlation vol/price: " << V->rho << "\n";
+}
+
 void basic_Heston_calibration_test()
 {
     const auto S0 = 228.26;
@@ -76,5 +104,9 @@ int main()
     // std::cout << "All tests result: " << (testPass?"Pass":"Fail") << "\n";
     std::cout << "Testing calibration...\n";
     basic_Heston_calibration_test();
+
+    // Testing Heston asset volatility
+    std::cout << "\nTesting implied asset volatility...\n";
+    test_Heston_asset_vol();
     return (testPass?0:1);
 }

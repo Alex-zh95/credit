@@ -33,9 +33,15 @@ add_custom_command(TARGET cpy_credit
 # Testing
 enable_testing()
 
-add_executable(HestonTest tests/cpp_tests/HestonTest.cpp src/credit/stvol.cpp)
+add_executable(HestonTest 
+    tests/cpp_tests/HestonTest.cpp
+    src/credit/stvol.cpp
+    src/credit/risk_neutral.cpp
+)
 target_link_libraries(HestonTest PRIVATE NLopt)
 add_test(HestonTest HestonTest)
 
-add_executable(SecantTest tests/cpp_tests/SecantTest.cpp)
+add_executable(SecantTest 
+    tests/cpp_tests/SecantTest.cpp
+)
 add_test(SecantTest SecantTest)
