@@ -195,7 +195,7 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
 }
 
 
-std::unique_ptr<StVol::Underlying> StVol::HestonAssetVolatilitySimulated(StVol::HestonCallMdl& mdl, double asset, double debt, double maturity)
+std::unique_ptr<StVol::Underlying> StVol::HestonAssetVolatilityImplied(StVol::HestonCallMdl& mdl, double asset, double debt, double maturity)
 {
     auto U = std::make_unique<StVol::Underlying>();
 

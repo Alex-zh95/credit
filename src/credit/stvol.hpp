@@ -162,7 +162,15 @@ namespace StVol
         std::vector<double> trade_volumes
     );
 
-    std::unique_ptr<StVol::Underlying> HestonAssetVolatilitySimulated(
+    /* @Description: Implied asset volatility parameters, using idea of Merton structural model.
+     *
+     * @Params:     HestonCallMdl& mdl:             Reference to Heston model object
+     *              double asset:                   Asset value of underlying company
+     *              double debt:                    Debt value of the underlying company
+     *              double maturity:                Maturity of using a call option to model company financing structure
+     */
+
+    std::unique_ptr<StVol::Underlying> HestonAssetVolatilityImplied(
         StVol::HestonCallMdl& mdl,
         double asset,
         double debt,
