@@ -11,8 +11,8 @@ namespace py = pybind11;
 #include "stvol.hpp"
 
 /* C++ Interfaces for StVol::HestonCallMdl 
- * This is due to not being able to pass std::unique_ptr<...> as arguments as Python does not 
- * implement such concepts.
+ * This is due to not being able to pass std::unique_ptr<...> as arguments 
+ * as Python does not implement such concepts.
  */
 
 double get_Heston_call_price(
@@ -39,9 +39,12 @@ double get_Heston_call_price(
 
 double get_Heston_default_probability(
     StVol::Underlying U_fitted,
-    double strike
+    double asset,
+    double debt,
+    double maturity = 1.0
 )
 {
+    // Build a Heston structural model representing the equity characteristics
     auto _U = std::make_unique<StVol::Underlying>();
     _U->S0 = U_fitted.S0;
     _U->v0 = U_fitted.v0;
@@ -52,10 +55,14 @@ double get_Heston_default_probability(
     _U->rho = U_fitted.rho;
     _U->rf = U_fitted.rf;
 
-    StVol::HestonCallMdl mdl(std::move(_U), strike);
-    mdl.calc_option_price();
+    StVol::HestonCallMdl call(std::move(_U), debt);
 
-    return (1. - mdl.get_rn_exercise_probability());
+    // Convert structural model for equity into structural model for asset
+    auto _V = StVol::HestonAssetVolatilityImplied(call, asset, debt, maturity);
+
+    StVol::HestonCallMdl structure(std::move(_V), debt);
+
+    return (1. - structure.get_rn_exercise_probability());
 }
 
 /* Exposing definitions to Python. */
@@ -128,7 +135,7 @@ PYBIND11_MODULE(cpy_credit, m) {
         "get_Heston_default_probability",
         &get_Heston_default_probability,
         "Attain risk-neutral default probability (Heston).",
-        py::arg("U_fitted"), py::arg("strike")
+        py::arg("U_fitted"), py::arg("asset"), py::arg("debt"), py::arg("maturity") = 1.0
     );
 
     m.def(

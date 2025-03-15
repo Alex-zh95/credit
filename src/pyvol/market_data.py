@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 import requests
+import io
 from bs4 import BeautifulSoup
 
 from nelson_siegel_svensson.calibrate import calibrate_ns_ols
@@ -58,7 +59,7 @@ def get_latest_yields():
     if table is None:
         raise Exception("Cannot find table on site")
 
-    df = pd.read_html(str(table))[0]
+    df = pd.read_html(io.StringIO(str(table)))[0]
 
     # Cols to keep
     maturity_cols = df.columns

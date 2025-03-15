@@ -31,7 +31,8 @@ print(f'Markt price of vol (lambda):    {pyV.vLambda:,.5f}')
 print(f'Price/vol corr (rho):           {pyV.rho:,.5f}')
 print('\n')
 
-# Using the fitted results, calculate the probability of exercising the option if current
-# value of underlying increases by risk-free rate within 1 year.
-pCall = cc.get_Heston_default_probability(pyV, S0 * (1 + vol_surf['rf'].iloc[0]))
-print(f'RN Prob of exercise:            {pCall:,.5f}')
+# Suppose now we want to calculate the default probability of this firm with a
+# given debt-to-asset ratio in 1 year's time
+debt_ratio = 0.75
+pDefault = cc.get_Heston_default_probability(pyV, 1.0, debt_ratio)
+print(f'RN Prob of default:             {pDefault:,.5f}')
