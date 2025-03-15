@@ -34,5 +34,14 @@ print('\n')
 # Suppose now we want to calculate the default probability of this firm with a
 # given debt-to-asset ratio in 1 year's time
 debt_ratio = 0.75
-pDefault = cc.get_Heston_default_probability(pyV, 1.0, debt_ratio)
-print(f'RN Prob of default:             {pDefault:,.5f}')
+pDefault, pyAssetVol = cc.get_Heston_default_probability(pyV, 1.0, debt_ratio)
+print(f'RN Prob of default:             {pDefault:,.5f}\n')
+
+print('\nImplied asset volatility parameters (C++):')
+print(f'Spot volatility (v0):           {pyAssetVol.v0:,.5f}')
+print(f'Mean-rev rate (alpha):          {pyAssetVol.alpha:,.5f}')
+print(f'Asymp mean var (theta):         {pyAssetVol.vTheta:,.5f}')
+print(f'Vol of vol (sigma):             {pyAssetVol.vSig:,.5f}')
+print(f'Markt price of vol (lambda):    {pyAssetVol.vLambda:,.5f}')
+print(f'Price/vol corr (rho):           {pyAssetVol.rho:,.5f}')
+print('\n')

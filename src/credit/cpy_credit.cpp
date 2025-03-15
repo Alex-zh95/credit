@@ -5,6 +5,7 @@
 #include <memory>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>           // Needed for binding STL containers
+#include <tuple>
 namespace py = pybind11;
 
 #include "risk_neutral.hpp"
@@ -37,7 +38,7 @@ double get_Heston_call_price(
     return mdl.get_option_price();
 }
 
-double get_Heston_default_probability(
+std::tuple<double, StVol::Underlying> get_Heston_default_probability(
     StVol::Underlying U_fitted,
     double asset,
     double debt,
@@ -62,7 +63,7 @@ double get_Heston_default_probability(
 
     StVol::HestonCallMdl structure(std::move(_V), debt);
 
-    return (1. - structure.get_rn_exercise_probability());
+    return std::make_tuple(1. - structure.get_rn_exercise_probability(), structure.get_underlying());
 }
 
 /* Exposing definitions to Python. */
@@ -134,7 +135,7 @@ PYBIND11_MODULE(cpy_credit, m) {
     m.def(
         "get_Heston_default_probability",
         &get_Heston_default_probability,
-        "Attain risk-neutral default probability (Heston).",
+        "Attain risk-neutral default probability (Heston). Also returns a copy of derived asset vol model.",
         py::arg("U_fitted"), py::arg("asset"), py::arg("debt"), py::arg("maturity") = 1.0
     );
 
