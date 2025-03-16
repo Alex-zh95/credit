@@ -8,7 +8,7 @@ using std::sqrt;
 #include <boost/math/distributions/normal.hpp>
 using boost::math::normal;
 
-#include "template_utils.hpp"
+#include "utils.hpp"
 #include "risk_neutral.hpp"
 
 std::tuple<double, double, double> vanilla_option_price(

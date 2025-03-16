@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cmath>
 
-#include "../../src/credit/template_utils.hpp"
+#include "../../src/credit/utils.hpp"
 
 double f(double x) {
     return (3 * x * x + 2 * x - 8);
