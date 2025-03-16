@@ -144,24 +144,16 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
         // Iterate and count the errors
         const auto nOptions = parameters->P.size();
         auto total_volume = 0.0;
+
         for (size_t i = 0; i < nOptions; ++i)
         {
             auto curActualPrice = parameters->P.at(i);
             auto curStrike = parameters->K.at(i);
             auto curMaturity = parameters->t.at(i);
             auto curVolume = parameters->volume.at(i);
+            auto curRiskFree = parameters->rf.at(i);
 
-            auto U = std::make_unique<StVol::Underlying>();
-            U->S0 = parameters->S0;
-            U->v0 = x.at(0);
-            U->alpha = x.at(1);
-            U->vTheta = x.at(2);
-            U->vSig = x.at(3);
-            U->vLambda = x.at(4);
-            U->rho = x.at(5);
-            U->rf = parameters->rf.at(i);
-
-            StVol::HestonCallMdl mdl(std::move(U), curStrike, curMaturity);
+            auto mdl = StVol::HestonCallMdl(parameters->S0, x, curRiskFree, curStrike, curMaturity);
             mdl.calc_option_price();
 
             error += pow(curActualPrice - mdl.get_option_price(), 2) * curVolume;

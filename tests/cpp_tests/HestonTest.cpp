@@ -46,28 +46,21 @@ bool test_Heston_pricing()
 
 void test_Heston_asset_vol()
 {
-    auto U = std::make_unique<StVol::Underlying>();
-    U->S0 = 100.;
-    U->v0 = 0.1;
-    U->rf = 0.03;
-    U->alpha = 1.5768;
-    U->vTheta = 0.0398;
-    U->vSig = 0.3;
-    U->vLambda = 0.575;
-    U->rho = -0.5711;
+    // Alternative declaration: v0, alpha, vTheta, vSig, vLambda, rho
+    std::vector<double> vols = {0.1, 1.5768, 0.0398, 0.3, 0.575, -0.5711};
 
     auto strike = 100.;
+    auto rf = 0.03;
     
-    StVol::HestonCallMdl mdl(std::move(U), strike);
+    StVol::HestonCallMdl mdl(strike, vols, rf, strike);
 
     auto V = StVol::HestonAssetVolatilityImplied(mdl, 150., 50., 1.5);
-
     std::cout << "Spot price:            " << V->S0 << "\n";
     std::cout << "Spot volatility:       " << V->v0 << "\n";
     std::cout << "Risk-free rate:        " << V->rf << "\n";
     std::cout << "Mean-reversion rate:   " << V->alpha << "\n";
     std::cout << "Long-term mean var:    " << V->vTheta << "\n";
-    std::cout << "Volatility volatility: " << V->vSig << "\n";
+    std::cout << "Vol of vol:            " << V->vSig << "\n";
     std::cout << "Market price of vol:   " << V->vLambda << "\n";
     std::cout << "Correlation vol/price: " << V->rho << "\n";
 }
@@ -88,7 +81,7 @@ void basic_Heston_calibration_test()
     std::cout << "Risk-free rate:        " << U->rf << "\n";
     std::cout << "Mean-reversion rate:   " << U->alpha << "\n";
     std::cout << "Long-term mean var:    " << U->vTheta << "\n";
-    std::cout << "Volatility volatility: " << U->vSig << "\n";
+    std::cout << "Vol of vol:            " << U->vSig << "\n";
     std::cout << "Market price of vol:   " << U->vLambda << "\n";
     std::cout << "Correlation vol/price: " << U->rho << "\n";
 }
