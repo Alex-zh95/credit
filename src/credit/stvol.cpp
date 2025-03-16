@@ -15,7 +15,7 @@ using boost::math::quadrature::trapezoidal;
 #include <nlopt.hpp>
 
 #include "stvol.hpp"
-#include "template_utils.hpp"
+#include "utils.hpp"
 #include "risk_neutral.hpp"
 
 std::complex<double> StVol::HestonCallMdl::charFn(std::complex<double> phi)
@@ -229,8 +229,9 @@ std::unique_ptr<StVol::Underlying> StVol::HestonAssetVolatilityImplied(StVol::He
 
     // For market price of volatility, as the asset volatility is unobservable,
     // and that the market price for the equity volatility can be distilled
-    // via Sharpe ratio, assume that the market price for asset volatility is the same
-    U->vLambda = mdl.get_underlying().vLambda;
+    // via Sharpe ratio, assume that the market price for asset volatility 
+    // follows the same exchange rate as that for vSig or mean reversion
+    U->vLambda = mdl.get_underlying().vLambda * U->v0 / mdl.get_underlying().v0;
 
     // Remaining params
     U->S0 = asset;
