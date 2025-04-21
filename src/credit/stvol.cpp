@@ -2,6 +2,8 @@
 #include <complex>
 #include <cstddef>
 #include <memory>
+#include <thread>
+#include <numeric>
 
 using std::pow;
 using std::exp;
@@ -136,29 +138,53 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
     // with x being the input vars to optimize, grad = gradient and data containing params
     auto square_err = [](const std::vector<double> &x, std::vector<double> &grad, void *data)
     {
-        auto error = 0.0;
-
         // Cast void ptr to Params struct
         auto* parameters = static_cast<Params*>(data);
 
         // Iterate and count the errors
         const auto nOptions = parameters->P.size();
-        auto total_volume = 0.0;
 
-        for (size_t i = 0; i < nOptions; ++i)
+        // Set up concurrency for calculation of errors
+        size_t nThreads = std::thread::hardware_concurrency();
+        const size_t chunkSize = nOptions / nThreads;
+        const size_t chunkRemainder = nOptions % nThreads;
+        std::vector<double> partialErr(nThreads, 0.0);
+        std::vector<double> partialVol(nThreads, 0.0);
+        std::vector<std::thread> threads;
+
+        for (size_t j = 0; j < nThreads; ++j) 
         {
-            auto curActualPrice = parameters->P.at(i);
-            auto curStrike = parameters->K.at(i);
-            auto curMaturity = parameters->t.at(i);
-            auto curVolume = parameters->volume.at(i);
-            auto curRiskFree = parameters->rf.at(i);
+            size_t start = j * chunkSize;
+            size_t end = start + chunkSize + ((j == nThreads - 1)?(chunkRemainder):0);
 
-            auto mdl = StVol::HestonCallMdl(parameters->S0, x, curRiskFree, curStrike, curMaturity);
-            mdl.calc_option_price();
+            threads.emplace_back(
+                [&, j, start, end]()
+                {
+                    for (size_t i = start; i < end; ++i) 
+                    {
+                        auto curActualPrice = parameters->P.at(i);
+                        auto curStrike = parameters->K.at(i);
+                        auto curMaturity = parameters->t.at(i);
+                        auto curVolume = parameters->volume.at(i);
+                        auto curRiskFree = parameters->rf.at(i);
 
-            error += pow(curActualPrice - mdl.get_option_price(), 2) * curVolume;
-            total_volume += curVolume;
+                        auto mdl = StVol::HestonCallMdl(parameters->S0, x, curRiskFree, curStrike, curMaturity);
+                        mdl.calc_option_price();
+
+                        partialErr[j] += pow(curActualPrice - mdl.get_option_price(), 2) * curVolume;
+                        partialVol[j] += curVolume;
+                    }
+                }
+            );
         }
+
+        for (auto& thread: threads)
+        {
+            thread.join();
+        }
+
+        auto error = std::reduce(partialErr.begin(), partialErr.end());
+        auto total_volume = std::reduce(partialVol.begin(), partialVol.end());
 
         return (error / total_volume);
     };
