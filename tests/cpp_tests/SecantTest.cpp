@@ -1,36 +1,30 @@
-#include <iostream>
-#include <cmath>
-
+// Testing file for Secant method implementation - Adapted for Boost Test Suite
 #include "../../src/credit/utils.hpp"
 
+// Includes Boost Test framework header. This macro handles dependencies and includes the runner
+#define BOOST_TEST_MODULE SecantTestSuite
+#include <boost/test/unit_test.hpp>
+
+// Function definition remains the same
 double f(double x) {
     return (3 * x * x + 2 * x - 8);
 }
 
-bool test_secant()
-{
-    std::cout << "Solving 3x^2 +2x - 8 = 0 for x.\n";
+// Test case for Secant method convergence verification
+BOOST_AUTO_TEST_CASE(TestSecantConvergence) {
+    // Detail original procedural steps for context/logging
+    BOOST_TEST_MESSAGE("Solving 3x^2 +2x - 8 = 0 for x.");
 
-    auto f_exact = (-2 + std::sqrt(2*2 - 4 * 3 * (-8))) / (2 * 3);
+    // Calculate required values
+    const double f_exact = (-2 + std::sqrt(2 * 2 - 4 * 3 * (-8))) / (2 * 3);
     auto f_approx = secant_root(f, 1.0);
-    auto error = (f_approx - f_exact) / f_exact;
-    std::cout << "Exact solution     = " << f_exact << "\n";
-    std::cout << "Secant solution    = " << f_approx << "\n";
-    std::cout << "Percentage error   = " << error * 100 << "%\n";
-    
-    return (std::abs(error) < 1e-3);
-}
+    double error = (f_approx - f_exact) / f_exact;
 
+    // Output results for comparison
+    BOOST_TEST_MESSAGE("Exact solution     = " << f_exact);
+    BOOST_TEST_MESSAGE("Secant solution    = " << f_approx);
+    BOOST_TEST_MESSAGE("Percentage error   = " << error * 100 << "%");
 
-int main() {
-    auto testPass = true;
-
-    std::cout << " Running test_secant...\n\n";
-    testPass &= test_secant();
-    std::cout << "\ntest_secant result: " << (testPass?"Pass":"Fail") << "\n\n";
-
-    // Final result
-    std::cout << "All tests result: " << (testPass?"Pass":"Fail") << "\n";
-
-    return (testPass?0:1);
+    // Assertion based on the original successful pass condition
+    BOOST_CHECK(std::abs(error) < 1e-3);
 }

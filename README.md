@@ -60,7 +60,7 @@ where:
 - $v_t$ is the volatility process,
 - $\theta$ is the long-term variance (asymptotic expected variance),
 - $\sigma$ is the volatility of variance (or volatility of volatility),
-- $\alpha$ is the mean reversion rate, i.e. rate of $\v_t \rightarrow \theta$,
+- $\alpha$ is the mean reversion rate, i.e. rate of $v_t \rightarrow \theta$,
 - $\rho$ is the correlation between the two standard Brownian motions $dB_t$ and $dW_t$.
 
 We would need to convert these quantities to risk-neutral measure, and via the Girsanov theorem, this is given by:
