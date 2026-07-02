@@ -72,7 +72,30 @@ where $\lambda$ is the market price of volatility risk.
 
 The solution to this model can be obtained via Fourier transforms.
 
-A common time series implementation is the GARCH(1,1) model.
+
+## C++ Library Compilation and Python Usage
+
+### Compiling the C++ Extension Module
+
+The library requires NLopt and Boost.Math (installed via Homebrew on Apple Silicon). To build the extension module, run CMake:
+
+```bash
+cmake -B build && cmake --build build
+```
+The successful build process automatically copies the resulting `.so` file to `src/pyvol/` for Python applications.
+
+### Calling Functions from Python
+
+The compiled module is imported as `cpy_credit`. Key functions exposed include:
+
+*   `get_asset_volatility(E, sigma_e, L, r, t)`: Numerically derives asset volatility.
+*   `get_vanilla_default_probability(a0, rf, sigma_a, L, t)`: Calculates risk-neutral default probability using the Merton model.
+*   `get_fpt_default_probability(a0, rf, sigma_a, L, q, gamma, t)`: Calculates default probability using the First Passage Time model.
+*   `get_Heston_call_price(U0, strike, t)`: Calculates European vanilla call option price under the Heston model.
+*   `get_Heston_default_probability(U_fitted, asset, debt, maturity)`: Attains risk-neutral default probability using the Heston model and returns derived asset volatility parameters.
+*   `get_min_capital_ROL(y, p, i)`: Obtains minimum rates on line.
+
+The `StVol::Underlying` class can be initialized and accessed via Python objects to pass model parameters.
 
 ## References
 
@@ -80,4 +103,3 @@ A common time series implementation is the GARCH(1,1) model.
 2. Hull, J. (2021): ‘Options, Futures, and Other Derivatives, Global Edition’.
 3. Cummins, J.D. (1990): ‘Asset Pricing Models and Insurance Ratemaking’, ASTIN Bulletin, 20(2), pp. 125–166. doi:10.2143/AST.20.2.2005438
 4. [Basket call options](https://quant.stackexchange.com/questions/57235/do-basket-options-have-a-closed-form-valuation-formula)
-5. Mikhailov S., Nögel U. (2003): ‘Heston’s Stochastic Volatility Model Implementation, Calibration and Some Extensions’.
