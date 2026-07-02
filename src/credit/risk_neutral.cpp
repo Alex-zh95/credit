@@ -1,19 +1,17 @@
 // Implementation of prototypes in risk_neutral.h
 #include <cmath>
+using std::exp;
 using std::log;
 using std::pow;
-using std::exp;
 using std::sqrt;
 
 #include <boost/math/distributions/normal.hpp>
 using boost::math::normal;
 
-#include "utils.hpp"
 #include "risk_neutral.hpp"
+#include "utils.hpp"
 
-std::tuple<double, double, double> vanilla_option_price(
-    const OptionParams& params)
-{
+std::tuple<double, double, double> vanilla_option_price(const StandardUnderlying& params) {
     const auto& S0 = params.S0;
     const auto& K = params.K;
     const auto& r = params.r;
@@ -31,15 +29,12 @@ std::tuple<double, double, double> vanilla_option_price(
     auto d1 = (log(S0 / K) + (r - q + 0.5 * pow(sigma, 2.0)) * t) / (sigma * sqrt(t));
     auto d2 = d1 - sigma * sqrt(t);
 
-    if (call)
-    {
+    if (call) {
         Phi1 = cdf(N, d1);
         Phi2 = cdf(N, d2);
 
         price = S0 * exp(-q * t) * Phi1 - K * exp(-r * t) * Phi2;
-    }
-    else
-    {
+    } else {
         Phi1 = cdf(N, -d1);
         Phi2 = cdf(N, -d2);
 
@@ -49,10 +44,7 @@ std::tuple<double, double, double> vanilla_option_price(
     return {price, Phi1, Phi2};
 }
 
-std::tuple<double, double> fpt_call_price(
-    const OptionParams& params,
-    double gamma)
-{
+std::tuple<double, double> fpt_call_price(const StandardUnderlying& params, double gamma) {
     const auto& S0 = params.S0;
     const auto& K = params.K;
     const auto& r = params.r;
@@ -62,71 +54,61 @@ std::tuple<double, double> fpt_call_price(
 
     normal N(0.0, 1.0);
 
-    if (S0 < K)
-        return {0.0, 0.0};
+    if (S0 < K) return {0.0, 0.0};
 
     auto Kt = K * exp(gamma * t);
     auto lambda = (r - q + 0.5 * pow(sigma, 2)) / pow(sigma, 2);
     auto y = log(Kt / S0) / (sigma * sqrt(t)) + lambda * sigma * sqrt(t);
     auto x = log(S0 / Kt) / (sigma * sqrt(t)) + lambda * sigma * sqrt(t);
 
-    auto c_do = S0 * cdf(N, x) * exp(-q * t) - Kt * cdf(N, x - sigma * sqrt(t)) - S0 * exp(-q * t) * pow(Kt / S0, 2 * lambda) * cdf(N, y) + Kt * pow(Kt / S0, 2 * lambda - 2) * cdf(N, y - sigma * sqrt(t));
+    auto c_do = S0 * cdf(N, x) * exp(-q * t) - Kt * cdf(N, x - sigma * sqrt(t)) -
+                S0 * exp(-q * t) * pow(Kt / S0, 2 * lambda) * cdf(N, y) +
+                Kt * pow(Kt / S0, 2 * lambda - 2) * cdf(N, y - sigma * sqrt(t));
 
-    auto [c, Phi1, Phi2] = vanilla_option_price(OptionParams(S0, K, r, sigma, t, true, q));
+    auto [c, Phi1, Phi2] = vanilla_option_price(StandardUnderlying(S0, K, r, sigma, t, true, q));
     auto c_di = c - c_do;
 
     return {c_do, c_di};
 }
 
-std::vector<double> wang_transform(
-    std::vector<double> P,
-    const double sharpe_ratio,
-    const bool inverse)
-{
+std::vector<double> wang_transform(std::vector<double> P, const double sharpe_ratio,
+                                   const bool inverse) {
     // Define N(0,1) object
     normal N(0.0, 1.0);
 
-    for (auto &p : P)
-        p = cdf(N, quantile(N, p) + (inverse ? -1 : 1) * sharpe_ratio);
+    for (auto& p : P) p = cdf(N, quantile(N, p) + (inverse ? -1 : 1) * sharpe_ratio);
 
     return P;
 }
 
-double get_asset_volatility(
-    const double E,
-    const double sigma_e,
-    const double L,
-    const double r,
-    const double t,
-    const int n_iter)
-{
+double get_asset_volatility(const double E, const double sigma_e, const double L, const double r,
+                            const double t, const int n_iter) {
     // Check the trivial case: if no leverage, asset and equity volatility equate
-    if (L < TOL)
-        return sigma_e;
+    if (L < TOL) return sigma_e;
 
     // Initial guesses
     auto cur_asset = E;
     auto sigma_a = 0.5;
 
     // Iterative steps
-    for (auto run_iter = 0; run_iter < n_iter; ++run_iter)
-    {
+    for (auto run_iter = 0; run_iter < n_iter; ++run_iter) {
         // Save down a previous result for sigma_a
         auto prev_sigma_a = sigma_a;
 
         // Update sigma_a with current asset value vector
-        // From Itô Lemma, we have the following relationship: sigma_e * Equity / Asset = Phi1 * sigma_a
-        auto [eq, Phi1, Phi2] = vanilla_option_price(OptionParams(cur_asset, L, r, sigma_a, t));
+        // From Itô Lemma, we have the following relationship: sigma_e * Equity / Asset = Phi1 *
+        // sigma_a
+        auto [eq, Phi1, Phi2] =
+            vanilla_option_price(StandardUnderlying(cur_asset, L, r, sigma_a, t));
         sigma_a = sigma_e * E / cur_asset / Phi1;
 
         // Early stop if difference between previous and current sigma_iterations is below tolerance
-        if (abs(sigma_a - prev_sigma_a) < TOL)
-            break;
+        if (abs(sigma_a - prev_sigma_a) < TOL) break;
 
         // Imply current asset value using current guess of sigma_a
-        auto fn = [&L, &r, &sigma_a, &t, &E](double _a)
-        {
-            auto [impl_equity, Phi1, Phi2] = vanilla_option_price(OptionParams(_a, L, r, sigma_a, t));
+        auto fn = [&L, &r, &sigma_a, &t, &E](double _a) {
+            auto [impl_equity, Phi1, Phi2] =
+                vanilla_option_price(StandardUnderlying(_a, L, r, sigma_a, t));
             return (E - impl_equity);
         };
 
@@ -136,9 +118,7 @@ double get_asset_volatility(
     return sigma_a;
 }
 
-double get_vanilla_default_probability(
-    const AssetDefaultParams& params)
-{
+double get_vanilla_default_probability(const AssetDefaultParams& params) {
     const auto& a0 = params.S0;
     const auto& rf = params.r;
     const auto& sigma_a = params.sigma;
@@ -147,14 +127,12 @@ double get_vanilla_default_probability(
 
     normal N(0.0, 1.0);
 
-    auto distance_to_default = (log(a0 / L) + (rf - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
+    auto distance_to_default =
+        (log(a0 / L) + (rf - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
     return cdf(N, -distance_to_default);
 }
 
-double get_fpt_default_probability(
-    const AssetDefaultParams& params,
-    double gamma)
-{
+double get_fpt_default_probability(const AssetDefaultParams& params, double gamma) {
     const auto& a0 = params.S0;
     const auto& rf = params.r;
     const auto& sigma_a = params.sigma;
@@ -172,20 +150,11 @@ double get_fpt_default_probability(
     return 1 - (cdf(N, d1) - pow(a0 / Lt, 1 - 2 * (rf - q - gamma) / pow(sigma_a, 2)) * cdf(N, d2));
 }
 
-double get_min_capital_ROL(
-    const double y,
-    const double p,
-    const double i)
-{
+double get_min_capital_ROL(const double y, const double p, const double i) {
     return ((1 + y) * (1 + p) - (1 + i)) / ((1 + i) * (1 + y));
 }
 
-double get_returns_with_put(
-    const double y,
-    const double y_var,
-    const double put,
-    const double r)
-{
+double get_returns_with_put(const double y, const double y_var, const double put, const double r) {
     // Determine historic investment mean return
     const auto sigma2_pt = log(1 + y_var / pow(y, 2));
     const auto mu_pt = log(pow(y, 2) / sqrt(y_var + pow(y, 2)));
@@ -198,20 +167,14 @@ double get_returns_with_put(
     return i_trunc;
 }
 
-double put_call_parity(    
-    const double in_price,
-    const double rf,
-    const double S0,
-    const double K,
-    const double t,
-    bool in_call)
-{
+double put_call_parity(const double in_price, const double rf, const double S0, const double K,
+                       const double t, bool in_call) {
     auto result = 0.0;
 
-    if (in_call) 
+    if (in_call)
         // Incoming price is call so return put
         result = in_price - S0 + K * exp(-rf * t);
-    else 
+    else
         // Incoming price is put so return call
         result = S0 - K * exp(-rf * t) + in_price;
 

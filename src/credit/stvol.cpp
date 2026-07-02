@@ -2,13 +2,13 @@
 #include <complex>
 #include <cstddef>
 #include <memory>
-#include <thread>
 #include <numeric>
+#include <thread>
 
-using std::pow;
 using std::exp;
-using std::sqrt;
+using std::pow;
 using std::real;
+using std::sqrt;
 using namespace std::complex_literals;
 
 #include <boost/math/quadrature/trapezoidal.hpp>
@@ -16,44 +16,43 @@ using boost::math::quadrature::trapezoidal;
 
 #include <nlopt.hpp>
 
+#include "risk_neutral.hpp"
 #include "stvol.hpp"
 #include "utils.hpp"
-#include "risk_neutral.hpp"
 
-std::complex<double> StVol::HestonCallMdl::charFn(std::complex<double> phi)
-{
+std::complex<double> StVol::HestonCallMdl::charFn(std::complex<double> phi) {
     auto a = underlying->alpha * underlying->vTheta;
     auto b = underlying->alpha + underlying->vLambda;
 
     // Parameter d given phi and b
-    auto d = sqrt( pow(underlying->rho * underlying->vSig * phi * 1i - b, 2) + (phi * 1i + pow(phi, 2)) * pow(underlying->vSig, 2) );
+    auto d = sqrt(pow(underlying->rho * underlying->vSig * phi * 1i - b, 2) +
+                  (phi * 1i + pow(phi, 2)) * pow(underlying->vSig, 2));
 
     // Parameter g given g given phi, b and d
-    auto g = (b - underlying->rho * underlying->vSig * phi * 1i + d) / (b - underlying->rho * underlying->vSig * phi * 1i - d);
+    auto g = (b - underlying->rho * underlying->vSig * phi * 1i + d) /
+             (b - underlying->rho * underlying->vSig * phi * 1i - d);
 
     // Characteristic fn via the above components. This takes the form
     // exp(x1) * x2 * exp(x3)
     auto exp_x1 = exp(underlying->rf * phi * 1i * t);
-    auto x2 = pow(underlying->S0, (phi * 1i)) * pow( (1. - g * exp(d * t)) / (1. - g), (-2. * a / pow(underlying->vSig, 2)) );
-    auto exp_x2 = exp(
-        a * t * (b - underlying->rho * underlying->vSig * phi * 1i + d) / pow(underlying->vSig, 2)
-            + underlying->v0 * (b - underlying->rho * underlying->vSig * phi * 1i + d) * ( (1. - exp(d * t)) / (1. - g * exp(d * t)) )
-            / (pow(underlying->vSig, 2))
-    );
+    auto x2 = pow(underlying->S0, (phi * 1i)) *
+              pow((1. - g * exp(d * t)) / (1. - g), (-2. * a / pow(underlying->vSig, 2)));
+    auto exp_x2 = exp(a * t * (b - underlying->rho * underlying->vSig * phi * 1i + d) /
+                          pow(underlying->vSig, 2) +
+                      underlying->v0 * (b - underlying->rho * underlying->vSig * phi * 1i + d) *
+                          ((1. - exp(d * t)) / (1. - g * exp(d * t))) / (pow(underlying->vSig, 2)));
 
     return exp_x1 * x2 * exp_x2;
 }
 
-std::complex<double> StVol::HestonCallMdl::integrand(double phi)
-{
+std::complex<double> StVol::HestonCallMdl::integrand(double phi) {
     auto numerator = exp(underlying->rf * t) * charFn(phi - 1i) - K * charFn(phi);
     auto denominator = 1i * phi * pow(K, 1i * phi);
 
-    return numerator/denominator;
+    return numerator / denominator;
 }
 
-void StVol::HestonCallMdl::calc_option_price()
-{
+void StVol::HestonCallMdl::calc_option_price() {
     // Get the real part of the integrand
     auto realIntegrand = [this](double _phi) { return real(integrand(_phi)); };
 
@@ -62,60 +61,54 @@ void StVol::HestonCallMdl::calc_option_price()
     P = 0.5 * (underlying->S0 - K * exp(-underlying->rf * t)) + M_1_PI * integrated;
 }
 
-double StVol::HestonCallMdl::get_delta()
-{
-    auto realIntegrand = [this](double _phi) 
-    {
+double StVol::HestonCallMdl::get_delta() {
+    auto realIntegrand = [this](double _phi) {
         auto phiShift = _phi - 1i;
         auto numerator = charFn(phiShift);
         auto denominator = 1i * _phi * pow(K, 1i * _phi);
-        return real(numerator/denominator);
+        return real(numerator / denominator);
     };
 
     auto integrated = trapezoidal(realIntegrand, 1e-3, 1e3);
     return (0.5 + M_1_PI * integrated);
 }
 
-double StVol::HestonCallMdl::get_rn_exercise_probability()
-{
-    auto realIntegrand = [this](double _phi) 
-    {
+double StVol::HestonCallMdl::get_rn_exercise_probability() {
+    auto realIntegrand = [this](double _phi) {
         auto numerator = charFn(_phi);
         auto denominator = 1i * _phi * pow(K, 1i * _phi);
-        return real(numerator/denominator);
+        return real(numerator / denominator);
     };
 
     auto integrated = trapezoidal(realIntegrand, 1e-3, 1e3);
     return (0.5 + M_1_PI * integrated);
 }
 
-
-std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vector<double> strikes, std::vector<double> r, std::vector<double> maturities, std::vector<double> market_prices, std::vector<double> trade_volumes)
-{
+std::unique_ptr<StVol::HestonUnderlying>
+StVol::fitHeston(double spot_price, std::vector<double> strikes, std::vector<double> r,
+                 std::vector<double> maturities, std::vector<double> market_prices,
+                 std::vector<double> trade_volumes) {
     const auto nCalls = market_prices.size();
 
     // Extract the available volatility surface and set into parameters
-    struct Params
-    {
+    struct Params {
         std::vector<double> K;
         std::vector<double> t;
         std::vector<double> P;
         std::vector<double> rf;
         std::vector<double> volume;
         double S0;
-
     };
 
     Params params;
-    
+
     params.K.reserve(nCalls);
     params.t.reserve(nCalls);
     params.P.reserve(nCalls);
     params.rf.reserve(nCalls);
     params.volume.reserve(nCalls);
 
-    for (size_t i = 0; i < nCalls; ++i)
-    {
+    for (size_t i = 0; i < nCalls; ++i) {
         params.K.push_back(strikes.at(i));
         params.t.push_back(maturities.at(i));
         params.P.push_back(market_prices.at(i));
@@ -136,8 +129,7 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
     // NLopt requires objective functions to use following signature:
     // (const std::vector<double> &x, std::vector<double> &grad, void *data)
     // with x being the input vars to optimize, grad = gradient and data containing params
-    auto square_err = [](const std::vector<double> &x, std::vector<double> &grad, void *data)
-    {
+    auto square_err = [](const std::vector<double>& x, std::vector<double>& grad, void* data) {
         // Cast void ptr to Params struct
         auto* parameters = static_cast<Params*>(data);
 
@@ -152,34 +144,31 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
         std::vector<double> partialVol(nThreads, 0.0);
         std::vector<std::thread> threads;
 
-        for (size_t j = 0; j < nThreads; ++j) 
-        {
+        for (size_t j = 0; j < nThreads; ++j) {
             size_t start = j * chunkSize;
-            size_t end = start + chunkSize + ((j == nThreads - 1)?(chunkRemainder):0);
+            size_t end = start + chunkSize + ((j == nThreads - 1) ? (chunkRemainder) : 0);
 
-            threads.emplace_back(
-                [&, j, start, end]()
-                {
-                    for (size_t i = start; i < end; ++i) 
-                    {
-                        auto curActualPrice = parameters->P.at(i);
-                        auto curStrike = parameters->K.at(i);
-                        auto curMaturity = parameters->t.at(i);
-                        auto curVolume = parameters->volume.at(i);
-                        auto curRiskFree = parameters->rf.at(i);
+            threads.emplace_back([&, j, start, end]() {
+                for (size_t i = start; i < end; ++i) {
+                    auto curActualPrice = parameters->P.at(i);
+                    auto curStrike = parameters->K.at(i);
+                    auto curMaturity = parameters->t.at(i);
+                    auto curVolume = parameters->volume.at(i);
+                    auto curRiskFree = parameters->rf.at(i);
 
-                        auto mdl = StVol::HestonCallMdl(OptionParams(parameters->S0, curStrike, curRiskFree, 0.0, curMaturity), x);
-                        mdl.calc_option_price();
+                    auto mdl =
+                        StVol::HestonCallMdl(StandardUnderlying(parameters->S0, curStrike,
+                                                                curRiskFree, 0.0, curMaturity),
+                                             x);
+                    mdl.calc_option_price();
 
-                        partialErr[j] += pow(curActualPrice - mdl.get_option_price(), 2) * curVolume;
-                        partialVol[j] += curVolume;
-                    }
+                    partialErr[j] += pow(curActualPrice - mdl.get_option_price(), 2) * curVolume;
+                    partialVol[j] += curVolume;
                 }
-            );
+            });
         }
 
-        for (auto& thread: threads)
-        {
+        for (auto& thread : threads) {
             thread.join();
         }
 
@@ -200,7 +189,7 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
     double minf;
     optimizer.optimize(xVars, minf);
 
-    auto result = std::make_unique<StVol::Underlying>();
+    auto result = std::make_unique<StVol::HestonUnderlying>();
     result->S0 = spot_price;
     result->v0 = xVars.at(0);
     result->alpha = xVars.at(1);
@@ -212,28 +201,18 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
     return result;
 }
 
-
-std::unique_ptr<StVol::Underlying> StVol::HestonAssetVolatilityImplied(StVol::HestonCallMdl& mdl, double asset, double debt, double maturity)
-{
-    auto U = std::make_unique<StVol::Underlying>();
+std::unique_ptr<StVol::HestonUnderlying>
+StVol::HestonAssetVolatilityImplied(StVol::HestonCallMdl& mdl, double asset, double debt,
+                                    double maturity) {
+    auto U = std::make_unique<StVol::HestonUnderlying>();
 
     // Use the Ito-derived relationship sig_E * E = Delta * sig_A * A,
     // to derive the spot and long-term volatility
-    U->v0 = get_asset_volatility(
-        asset,
-        mdl.get_underlying().v0,
-        debt,
-        mdl.get_underlying().rf,
-        maturity
-    );
+    U->v0 = get_asset_volatility(asset, mdl.get_underlying().v0, debt, mdl.get_underlying().rf,
+                                 maturity);
 
-    U->vTheta = get_asset_volatility(
-        asset,
-        mdl.get_underlying().vTheta,
-        debt,
-        mdl.get_underlying().rf,
-        maturity 
-    );
+    U->vTheta = get_asset_volatility(asset, mdl.get_underlying().vTheta, debt,
+                                     mdl.get_underlying().rf, maturity);
 
     // Keeping it simple, the relationship above states sig_E and sig_A
     // are linear proportional at time t. So for volatility of volatility,
@@ -243,7 +222,8 @@ std::unique_ptr<StVol::Underlying> StVol::HestonAssetVolatilityImplied(StVol::He
     // For correlation, we need the implied equity to asset delta
     // Simplify by using standard Black-Scholes
     auto rf = mdl.get_underlying().rf;
-    auto [implied_E, implied_asset_equity_delta, Phi2] = vanilla_option_price(OptionParams(asset, debt, rf, rf, maturity));
+    auto [implied_E, implied_asset_equity_delta, Phi2] =
+        vanilla_option_price(StandardUnderlying(asset, debt, rf, rf, maturity));
 
     // Asset volatility to value correlation motivation:
     // If there is no leverage, then this equates that of equity volatility
@@ -256,7 +236,7 @@ std::unique_ptr<StVol::Underlying> StVol::HestonAssetVolatilityImplied(StVol::He
 
     // For market price of volatility, as the asset volatility is unobservable,
     // and that the market price for the equity volatility can be distilled
-    // via Sharpe ratio, assume that the market price for asset volatility 
+    // via Sharpe ratio, assume that the market price for asset volatility
     // follows the same exchange rate as that for vSig or mean reversion
     U->vLambda = mdl.get_underlying().vLambda * U->v0 / mdl.get_underlying().v0;
 

@@ -1,8 +1,8 @@
 #ifndef RISK_NEUTRAL_H
 #define RISK_NEUTRAL_H
 
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include "params.hpp"
 #include "utils.hpp"
@@ -29,13 +29,13 @@
  * double Phi1        Delta of the option
  * double Phi2        Risk-neutral probability that option is exercised
  */
-std::tuple<double, double, double> vanilla_option_price(
-    const OptionParams& params);
+std::tuple<double, double, double> vanilla_option_price(const StandardUnderlying& params);
 
-/** 
+/**
  * Description
  * -----------
- * Calculate the down-and-out call option price via the Black-Scholes equation, using the provided inputs:
+ * Calculate the down-and-out call option price via the Black-Scholes equation, using the provided
+ * inputs:
  *
  * Params
  * ------
@@ -53,9 +53,7 @@ std::tuple<double, double, double> vanilla_option_price(
  *      double c_do:    Price of down-and-out call at time 0
  *      double c_di:    Price of down-and-in call at time 0
  */
-std::tuple<double, double> fpt_call_price(
-    const OptionParams& params,
-    double gamma = 0);
+std::tuple<double, double> fpt_call_price(const StandardUnderlying& params, double gamma = 0);
 
 /**
  * Description
@@ -73,13 +71,11 @@ std::tuple<double, double> fpt_call_price(
  * -------
  * std::vector<double>:        Output vector of probabilities
  */
-std::vector<double> wang_transform(
-    std::vector<double> P,
-    const double sharpe_ratio,
-    const bool inverse = false);
+std::vector<double> wang_transform(std::vector<double> P, const double sharpe_ratio,
+                                   const bool inverse = false);
 
-/** 
- * Description 
+/**
+ * Description
  * ------------
  * Derive asset volatility via equity volatility numerically.
  * Motivation for this is due to asset volatility not being observable.
@@ -97,14 +93,8 @@ std::vector<double> wang_transform(
  * -------
  * double sigma_a:             Asset volatility
  */
-double get_asset_volatility(
-    const double E,
-    const double sigma_e,
-    const double L,
-    const double r,
-    const double t = 1,
-    const int n_iter = N_ITER
-);
+double get_asset_volatility(const double E, const double sigma_e, const double L, const double r,
+                            const double t = 1, const int n_iter = N_ITER);
 
 /**
  * Description
@@ -121,10 +111,9 @@ double get_asset_volatility(
  *
  * Returns:        double p_default:       Probability of default
  */
-double get_vanilla_default_probability(
-    const AssetDefaultParams& params);
+double get_vanilla_default_probability(const AssetDefaultParams& params);
 
-/** 
+/**
  * Description
  * -----------
  * Calculate risk-neutral probability of default under First Passage Time model
@@ -143,11 +132,9 @@ double get_vanilla_default_probability(
  * -------
  * double:                 Probability of default
  */
-double get_fpt_default_probability(
-    const AssetDefaultParams& params,
-    double gamma = 0);
+double get_fpt_default_probability(const AssetDefaultParams& params, double gamma = 0);
 
-/** 
+/**
  * Description
  * -----------
  * Calculate minimum rate on line (ROL).
@@ -156,19 +143,16 @@ double get_fpt_default_probability(
  * Params
  * ------
  * double y:               Target investment rate (yield),
- * double p:               Price of put option used to hedge against investment achieving less than risk-free return,
- * double i:               Expected investmet return with put protection.
+ * double p:               Price of put option used to hedge against investment achieving less than
+ * risk-free return, double i:               Expected investmet return with put protection.
  *
  * Returns
  * -------
  * double min_ROL
  */
-double get_min_capital_ROL(
-    const double y,
-    const double p,
-    const double i);
+double get_min_capital_ROL(const double y, const double p, const double i);
 
-/** 
+/**
  * Description
  * -----------
  * Calculate returns on investment with purchase of put option.
@@ -180,16 +164,13 @@ double get_min_capital_ROL(
  * double put:         Market price of put option.
  * double r:           Risk-free rate.
  */
-double get_returns_with_put(
-    const double y,
-    const double y_var,
-    const double put,
-    const double r);
+double get_returns_with_put(const double y, const double y_var, const double put, const double r);
 
-/** 
+/**
  * Description
  * -----------
- * Calculate corresponding price of a put or call option given a call or put option via put-call parity.
+ * Calculate corresponding price of a put or call option given a call or put option via put-call
+ * parity.
  *
  * Params
  * ------
@@ -199,17 +180,12 @@ double get_returns_with_put(
  * double K:               Strike price
  * double t = 1:           Duration of contract
  * bool in_call = true:    Type of instrument, default to call
- * 
+ *
  * Returns
  * -------
  * double out_price:       Price of converted instrument
  */
-double put_call_parity(
-    const double in_price,
-    const double rf,
-    const double S0,
-    const double K,
-    const double t = 1,
-    bool in_call = true);
+double put_call_parity(const double in_price, const double rf, const double S0, const double K,
+                       const double t = 1, bool in_call = true);
 
 #endif // RISK_NEUTRAL_H

@@ -1,4 +1,5 @@
 // Testing file for Heston model via theory - Adapted for Boost Test Suite
+#include "../../src/credit/params.hpp"
 #include "../../src/credit/stvol.hpp"
 #include <cmath>
 #include <iostream>
@@ -13,7 +14,7 @@
 // Test case 1: Heston pricing model validation
 BOOST_AUTO_TEST_CASE(TestHestonPricing) {
     // Setup parameters based on original implementation
-    auto U = std::make_unique<StVol::Underlying>();
+    auto U = std::make_unique<StVol::HestonUnderlying>();
     U->S0 = 100.;
     U->v0 = 0.1;
     U->rf = 0.03;
@@ -53,7 +54,7 @@ BOOST_AUTO_TEST_CASE(TestHestonAssetVolatility) {
     auto strike = 100.;
     auto rf = 0.03;
 
-    StVol::HestonCallMdl mdl(OptionParams(strike, strike, rf, 0.0), vols);
+    StVol::HestonCallMdl mdl(StandardUnderlying(strike, strike, rf, 0.0), vols);
 
     auto V = StVol::HestonAssetVolatilityImplied(mdl, 150., 50., 1.5);
 
