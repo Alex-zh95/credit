@@ -30,8 +30,6 @@ find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 target_compile_definitions(cpy_credit PRIVATE VERSION_INFO=0.1.0)
 target_link_libraries(cpy_credit PRIVATE NLopt)
 
-# Explicit inclusions for Apple Silicon (paths needed by the compiler, matching original intent)
-include_directories("/opt/homebrew/include/")
 
 # Copy the built library to src/pyvol folder for Python packaging
 add_custom_command(TARGET cpy_credit
