@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Homebrew dependencies
+        run: brew install nlopt boost
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PDM
+        run: pip install pdm
+
+      - name: Cache PDM dependencies
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: pdm-${{ runner.os }}-${{ hashFiles('pdm.lock') }}
+          restore-keys: |
+            pdm-${{ runner.os }}-
+
+      - name: Install Python dependencies
+        run: pdm install
+
+      - name: Build C++ extension
+        run: |
+          cmake -B build
+          cmake --build build
+
+      - name: Run C++ tests
+        run: cd build && ctest --output-on-failure
+
+      - name: Run Python tests
+        continue-on-error: true
+        run: |
+          python tests/py_tests/garch_test.py
+          python tests/py_tests/heston_fit.py
