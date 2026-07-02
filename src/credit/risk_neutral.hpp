@@ -4,6 +4,7 @@
 #include <vector>
 #include <tuple>
 
+#include "params.hpp"
 #include "utils.hpp"
 
 /**
@@ -29,13 +30,7 @@
  * double Phi2        Risk-neutral probability that option is exercised
  */
 std::tuple<double, double, double> vanilla_option_price(
-    const double S0,
-    const double K,
-    const double r,
-    const double sigma,
-    const double t = 1,
-    const bool call = true,
-    const double q = 0);
+    const OptionParams& params);
 
 /** 
  * Description
@@ -59,13 +54,8 @@ std::tuple<double, double, double> vanilla_option_price(
  *      double c_di:    Price of down-and-in call at time 0
  */
 std::tuple<double, double> fpt_call_price(
-    const double S0,
-    const double K,
-    const double r,
-    const double sigma,
-    const double t = 1,
-    const double gamma = 0,
-    const double q = 0);
+    const OptionParams& params,
+    double gamma = 0);
 
 /**
  * Description
@@ -132,11 +122,7 @@ double get_asset_volatility(
  * Returns:        double p_default:       Probability of default
  */
 double get_vanilla_default_probability(
-    const double a0,
-    const double rf,
-    const double sigma_a,
-    const double L,
-    const double t = 1);
+    const AssetDefaultParams& params);
 
 /** 
  * Description
@@ -158,13 +144,8 @@ double get_vanilla_default_probability(
  * double:                 Probability of default
  */
 double get_fpt_default_probability(
-    const double a0,
-    const double rf,
-    const double sigma_a,
-    const double L,
-    const double q = 0,
-    const double gamma = 0,
-    const double t = 1);
+    const AssetDefaultParams& params,
+    double gamma = 0);
 
 /** 
  * Description

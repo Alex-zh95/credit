@@ -168,7 +168,7 @@ std::unique_ptr<StVol::Underlying> StVol::fitHeston(double spot_price, std::vect
                         auto curVolume = parameters->volume.at(i);
                         auto curRiskFree = parameters->rf.at(i);
 
-                        auto mdl = StVol::HestonCallMdl(parameters->S0, x, curRiskFree, curStrike, curMaturity);
+                        auto mdl = StVol::HestonCallMdl(OptionParams(parameters->S0, curStrike, curRiskFree, 0.0, curMaturity), x);
                         mdl.calc_option_price();
 
                         partialErr[j] += pow(curActualPrice - mdl.get_option_price(), 2) * curVolume;
@@ -242,7 +242,8 @@ std::unique_ptr<StVol::Underlying> StVol::HestonAssetVolatilityImplied(StVol::He
 
     // For correlation, we need the implied equity to asset delta
     // Simplify by using standard Black-Scholes
-    auto [implied_E, implied_asset_equity_delta, Phi2] = vanilla_option_price(asset, debt, mdl.get_underlying().rf, mdl.get_underlying().rf);
+    auto rf = mdl.get_underlying().rf;
+    auto [implied_E, implied_asset_equity_delta, Phi2] = vanilla_option_price(OptionParams(asset, debt, rf, rf, maturity));
 
     // Asset volatility to value correlation motivation:
     // If there is no leverage, then this equates that of equity volatility

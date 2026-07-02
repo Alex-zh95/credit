@@ -5,6 +5,8 @@
 #include <memory>
 #include <vector>
 
+#include "params.hpp"
+
 // General Note: Move constructors implicitly generated as long as no copy constructor/assignment defined, other than delete, or user-generated destructor.
 
 namespace StVol
@@ -46,17 +48,17 @@ public:
     {}
 
     // Alternative constructor - pass in a std::vector<double> for volatility parameters
-    HestonCallMdl(double _S0, const std::vector<double> &volParams, double _rf, double _K, double _t = 1.): K(_K), t(_t), P(0.0)
+    HestonCallMdl(const OptionParams& params, const std::vector<double> &volParams): K(params.K), t(params.t), P(0.0)
     {
         underlying = std::make_unique<Underlying>();
-        underlying->S0 = _S0;
+        underlying->S0 = params.S0;
         underlying->v0 = volParams.at(0);
         underlying->alpha = volParams.at(1);
         underlying->vTheta = volParams.at(2);
         underlying->vSig = volParams.at(3);
         underlying->vLambda = volParams.at(4);
         underlying->rho = volParams.at(5);
-        underlying->rf = _rf;
+        underlying->rf = params.r;
     }
 
     // Copy constructor

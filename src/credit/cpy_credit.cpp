@@ -8,6 +8,7 @@
 #include <tuple>
 namespace py = pybind11;
 
+#include "params.hpp"
 #include "risk_neutral.hpp"
 #include "stvol.hpp"
 
@@ -80,14 +81,18 @@ PYBIND11_MODULE(cpy_credit, m) {
 
     m.def(
         "get_vanilla_default_probability",
-        &get_vanilla_default_probability,
+        [](double a0, double rf, double sigma_a, double L, double t) {
+            return get_vanilla_default_probability(AssetDefaultParams(a0, rf, sigma_a, L, t));
+        },
         "Attain risk-neutral default probability (Merton)",
         py::arg("a0"), py::arg("rf"), py::arg("sigma_a"), py::arg("L"), py::arg("t") = 1
     );
 
     m.def(
         "get_fpt_default_probability",
-        &get_fpt_default_probability,
+        [](double a0, double rf, double sigma_a, double L, double q, double gamma, double t) {
+            return get_fpt_default_probability(AssetDefaultParams(a0, rf, sigma_a, L, t, q), gamma);
+        },
         "Attain risk-neutral default probability (First Passage Time).",
         py::arg("a0"), py::arg("rf"), py::arg("sigma_a"), py::arg("L"), py::arg("delta") = 0., py::arg("gamma") = 0., py::arg("t") = 1.
     );

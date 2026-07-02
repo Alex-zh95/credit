@@ -12,19 +12,20 @@ using boost::math::normal;
 #include "risk_neutral.hpp"
 
 std::tuple<double, double, double> vanilla_option_price(
-    const double S0,
-    const double K,
-    const double r,
-    const double sigma,
-    const double t,
-    const bool call,
-    const double q)
+    const OptionParams& params)
 {
+    const auto& S0 = params.S0;
+    const auto& K = params.K;
+    const auto& r = params.r;
+    const auto& sigma = params.sigma;
+    const auto& t = params.t;
+    const auto& call = params.call;
+    const auto& q = params.q;
+
     auto Phi1 = 0.0;
     auto Phi2 = 0.0;
     auto price = 0.0;
 
-    // Define N(0,1) object
     normal N(0.0, 1.0);
 
     auto d1 = (log(S0 / K) + (r - q + 0.5 * pow(sigma, 2.0)) * t) / (sigma * sqrt(t));
@@ -49,14 +50,16 @@ std::tuple<double, double, double> vanilla_option_price(
 }
 
 std::tuple<double, double> fpt_call_price(
-    const double S0,
-    const double K,
-    const double r,
-    const double sigma,
-    const double t,
-    const double gamma,
-    const double q)
+    const OptionParams& params,
+    double gamma)
 {
+    const auto& S0 = params.S0;
+    const auto& K = params.K;
+    const auto& r = params.r;
+    const auto& sigma = params.sigma;
+    const auto& t = params.t;
+    const auto& q = params.q;
+
     normal N(0.0, 1.0);
 
     if (S0 < K)
@@ -69,9 +72,7 @@ std::tuple<double, double> fpt_call_price(
 
     auto c_do = S0 * cdf(N, x) * exp(-q * t) - Kt * cdf(N, x - sigma * sqrt(t)) - S0 * exp(-q * t) * pow(Kt / S0, 2 * lambda) * cdf(N, y) + Kt * pow(Kt / S0, 2 * lambda - 2) * cdf(N, y - sigma * sqrt(t));
 
-    // Exploiting the fact that a standard call can be decomposed
-    // into sum of down-and-out and down-and-in calls
-    auto [c, Phi1, Phi2] = vanilla_option_price(S0, K, r, sigma, t, true, q);
+    auto [c, Phi1, Phi2] = vanilla_option_price(OptionParams(S0, K, r, sigma, t, true, q));
     auto c_di = c - c_do;
 
     return {c_do, c_di};
@@ -115,7 +116,7 @@ double get_asset_volatility(
 
         // Update sigma_a with current asset value vector
         // From Itô Lemma, we have the following relationship: sigma_e * Equity / Asset = Phi1 * sigma_a
-        auto [eq, Phi1, Phi2] = vanilla_option_price(cur_asset, L, r, sigma_a, t);
+        auto [eq, Phi1, Phi2] = vanilla_option_price(OptionParams(cur_asset, L, r, sigma_a, t));
         sigma_a = sigma_e * E / cur_asset / Phi1;
 
         // Early stop if difference between previous and current sigma_iterations is below tolerance
@@ -125,7 +126,7 @@ double get_asset_volatility(
         // Imply current asset value using current guess of sigma_a
         auto fn = [&L, &r, &sigma_a, &t, &E](double _a)
         {
-            auto [impl_equity, Phi1, Phi2] = vanilla_option_price(_a, L, r, sigma_a, t);
+            auto [impl_equity, Phi1, Phi2] = vanilla_option_price(OptionParams(_a, L, r, sigma_a, t));
             return (E - impl_equity);
         };
 
@@ -136,12 +137,14 @@ double get_asset_volatility(
 }
 
 double get_vanilla_default_probability(
-    const double a0,
-    const double rf,
-    const double sigma_a,
-    const double L,
-    const double t)
+    const AssetDefaultParams& params)
 {
+    const auto& a0 = params.S0;
+    const auto& rf = params.r;
+    const auto& sigma_a = params.sigma;
+    const auto& L = params.K;
+    const auto& t = params.t;
+
     normal N(0.0, 1.0);
 
     auto distance_to_default = (log(a0 / L) + (rf - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
@@ -149,17 +152,19 @@ double get_vanilla_default_probability(
 }
 
 double get_fpt_default_probability(
-    const double a0,
-    const double rf,
-    const double sigma_a,
-    const double L,
-    const double q,
-    const double gamma,
-    const double t)
+    const AssetDefaultParams& params,
+    double gamma)
 {
+    const auto& a0 = params.S0;
+    const auto& rf = params.r;
+    const auto& sigma_a = params.sigma;
+    const auto& L = params.K;
+    const auto& q = params.q;
+    const auto& t = params.t;
+
     normal N(0.0, 1.0);
 
-    auto Lt = L * exp(gamma * t); // Default boundary via gamma growth rate at expiry
+    auto Lt = L * exp(gamma * t);
 
     auto d1 = (log(a0) - log(Lt) + (rf - q - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));
     auto d2 = (-log(a0) - log(Lt) + (rf - q - 0.5 * pow(sigma_a, 2)) * t) / (sigma_a * sqrt(t));

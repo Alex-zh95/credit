@@ -52,7 +52,7 @@ void test_Heston_asset_vol()
     auto strike = 100.;
     auto rf = 0.03;
     
-    StVol::HestonCallMdl mdl(strike, vols, rf, strike);
+    StVol::HestonCallMdl mdl(OptionParams(strike, strike, rf, 0.0), vols);
 
     auto V = StVol::HestonAssetVolatilityImplied(mdl, 150., 50., 1.5);
     std::cout << "Spot price:            " << V->S0 << "\n";
