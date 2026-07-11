@@ -37,20 +37,11 @@ jobs:
 
       - name: Build C++ extension
         run: |
-          cmake -B build 2>&1 | tee /tmp/cmake.log
-          cmake --build build 2>&1 | tee -a /tmp/cmake.log
+          cmake -B build
+          cmake --build build
 
       - name: Run C++ tests
-        run: |
-          cd build && ctest --output-on-failure 2>&1 | tee /tmp/ctest.log
-
-      - name: Upload logs on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: logs-${{ github.run_id }}
-          path: /tmp/*.log
-          retention-days: 7
+        run: cd build && ctest --output-on-failure
 
       - name: Run Python tests
         continue-on-error: true
