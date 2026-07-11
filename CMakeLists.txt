@@ -70,17 +70,17 @@ else()
 endif()
 add_test(NAME HestonTest COMMAND HestonTest)
 
-add_executable(SecantTest
-    tests/cpp_tests/SecantTest.cpp
+add_executable(RootSolverTest
+    tests/cpp_tests/RootSolverTest.cpp
 )
 
-target_include_directories(SecantTest PRIVATE ${NLOPT_INCLUDE_DIRS})
-target_link_libraries(SecantTest PRIVATE Boost::unit_test_framework)
+target_include_directories(RootSolverTest PRIVATE ${NLOPT_INCLUDE_DIRS})
+target_link_libraries(RootSolverTest PRIVATE Boost::unit_test_framework)
 if(TARGET NLopt::nlopt)
-  target_link_libraries(SecantTest PRIVATE NLopt::nlopt)
+  target_link_libraries(RootSolverTest PRIVATE NLopt::nlopt)
 elseif(TARGET NLOPT::nlopt)
-  target_link_libraries(SecantTest PRIVATE NLOPT::nlopt)
+  target_link_libraries(RootSolverTest PRIVATE NLOPT::nlopt)
 else()
-  target_link_libraries(SecantTest PRIVATE ${NLOPT_LIBRARIES})
+  target_link_libraries(RootSolverTest PRIVATE ${NLOPT_LIBRARIES})
 endif()
-add_test(NAME SecantTest COMMAND SecantTest)
+add_test(NAME RootSolverTest COMMAND RootSolverTest)

@@ -62,6 +62,8 @@ std::tuple<double, double> fpt_call_price(const StandardUnderlying& params, doub
     const auto& t = params.t;
     const auto& q = params.q;
 
+    validate_option_params(S0, K, sigma, t);
+
     normal N(0.0, 1.0);
 
     if (S0 < K) return {0.0, 0.0};
@@ -113,7 +115,7 @@ double get_asset_volatility(const double E, const double sigma_e, const double L
         sigma_a = sigma_e * E / cur_asset / Phi1;
 
         // Early stop if difference between previous and current sigma_iterations is below tolerance
-        if (abs(sigma_a - prev_sigma_a) < TOL) break;
+        if (std::abs(sigma_a - prev_sigma_a) < TOL) break;
 
         // Imply current asset value using current guess of sigma_a
         auto fn = [&L, &r, &sigma_a, &t, &E](double _a) {
@@ -122,7 +124,7 @@ double get_asset_volatility(const double E, const double sigma_e, const double L
             return (E - impl_equity);
         };
 
-        cur_asset = secant_root(fn, E);
+        cur_asset = bracket_root(fn, E);
     }
 
     return sigma_a;
