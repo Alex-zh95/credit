@@ -35,7 +35,7 @@ target_link_libraries(cpy_credit PRIVATE NLopt)
 # Copy the built library to src/pyvol folder for Python packaging
 add_custom_command(TARGET cpy_credit
     POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E rename
+    COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:cpy_credit> ${CMAKE_SOURCE_DIR}/src/pyvol/$<TARGET_FILE_NAME:cpy_credit>
     COMMENT "Copying library to pyvol source directory."
 )
