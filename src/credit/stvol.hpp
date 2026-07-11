@@ -70,17 +70,14 @@ namespace StVol {
         HestonCallMdl(const StandardUnderlying& params, const std::vector<double>& volParams)
             : underlying(std::make_unique<HestonUnderlying>(params, volParams)), P(0.0) {}
 
-        // Copy constructor
         HestonCallMdl(const HestonCallMdl& other) : P(other.P) {
             if (other.underlying)
                 underlying = std::make_unique<HestonUnderlying>(*other.underlying);
         }
 
-        // Move constructor
-        HestonCallMdl(HestonCallMdl&& other)
+        HestonCallMdl(HestonCallMdl&& other) noexcept
             : underlying(std::move(other.underlying)), P(other.P) {}
 
-        // Copy assignment operator
         HestonCallMdl& operator=(const HestonCallMdl& other) {
             if (this != &other) {
                 underlying = other.underlying
@@ -88,33 +85,30 @@ namespace StVol {
                                  : nullptr;
                 P = other.P;
             }
-
             return *this;
         }
 
-        // Move assignment operator
-        HestonCallMdl& operator=(HestonCallMdl&& other) {
+        HestonCallMdl& operator=(HestonCallMdl&& other) noexcept {
             if (this != &other) {
                 underlying = std::move(other.underlying);
                 P = other.P;
             }
-
             return *this;
         }
 
         // Getters and setters
-        void set_strike(double _K) { underlying->K = _K; }
-        void set_maturity(double _t) { underlying->t = _t; }
+        void set_strike(double _K) { underlying->K = _K; P = 0; }
+        void set_maturity(double _t) { underlying->t = _t; P = 0; }
         void set_underlying(std::unique_ptr<HestonUnderlying> _underlying) {
-            underlying = std::move(_underlying);
+            underlying = std::move(_underlying); P = 0;
         }
 
-        double get_strike() { return underlying->K; }
-        double get_maturity() { return underlying->t; }
-        double get_option_price() { return P; }
+        double get_strike() const noexcept { return underlying->K; }
+        double get_maturity() const noexcept { return underlying->t; }
+        double get_option_price() const noexcept { return P; }
 
         // Read-only const access to the Underlying struct
-        const HestonUnderlying& get_underlying() const { return *underlying; }
+        const HestonUnderlying& get_underlying() const noexcept { return *underlying; }
 
         // Get risk-neutral probability of exercise (asset > strike)
         double get_rn_exercise_probability();
@@ -139,7 +133,7 @@ namespace StVol {
          * -------
          * std::complex<double>: Result
          */
-        std::complex<double> charFn(std::complex<double> phi);
+        std::complex<double> charFn(std::complex<double> phi) const;
 
         /**
          * Description
@@ -154,7 +148,7 @@ namespace StVol {
          * -------
          * std::complex<double>: Result
          */
-        std::complex<double> integrand(double phi);
+        std::complex<double> integrand(double phi) const;
 
         std::unique_ptr<HestonUnderlying> underlying;
         double P;

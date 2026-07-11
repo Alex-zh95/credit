@@ -20,7 +20,7 @@ using boost::math::quadrature::trapezoidal;
 #include "stvol.hpp"
 #include "utils.hpp"
 
-std::complex<double> StVol::HestonCallMdl::charFn(std::complex<double> phi) {
+std::complex<double> StVol::HestonCallMdl::charFn(std::complex<double> phi) const {
     const auto t = underlying->t;
 
     auto a = underlying->alpha * underlying->vTheta;
@@ -47,7 +47,7 @@ std::complex<double> StVol::HestonCallMdl::charFn(std::complex<double> phi) {
     return exp_x1 * x2 * exp_x2;
 }
 
-std::complex<double> StVol::HestonCallMdl::integrand(double phi) {
+std::complex<double> StVol::HestonCallMdl::integrand(double phi) const {
     const auto K = underlying->K;
 
     auto numerator = exp(underlying->r * underlying->t) * charFn(phi - 1i) - K * charFn(phi);
@@ -143,11 +143,22 @@ StVol::fitHeston(double spot_price, std::vector<double> strikes, std::vector<dou
 
         // Set up concurrency for calculation of errors
         size_t nThreads = std::thread::hardware_concurrency();
+        if (nThreads == 0) nThreads = 1;
         const size_t chunkSize = nOptions / nThreads;
         const size_t chunkRemainder = nOptions % nThreads;
         std::vector<double> partialErr(nThreads, 0.0);
         std::vector<double> partialVol(nThreads, 0.0);
         std::vector<std::thread> threads;
+        threads.reserve(nThreads);
+
+        // RAII guard: join all threads on destruction (exception-safe)
+        struct ThreadGuard {
+            std::vector<std::thread>& ts;
+            ~ThreadGuard() { for (auto& t : ts) if (t.joinable()) t.join(); }
+            ThreadGuard(const ThreadGuard&) = delete;
+            ThreadGuard& operator=(const ThreadGuard&) = delete;
+        };
+        ThreadGuard guard{threads};
 
         for (size_t j = 0; j < nThreads; ++j) {
             size_t start = j * chunkSize;

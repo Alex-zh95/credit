@@ -6,8 +6,7 @@
  * -----------
  * Base data structure holding parameters common to underlying instruments and the
  * (vanilla) option contracts written on them. Specialized underlyings (e.g.
- * StVol::HestonUnderlying, AssetDefaultParams) inherit from this rather than
- * redefining common symbols.
+ * StVol::HestonUnderlying) inherit from this rather than redefining common symbols.
  *
  * Params
  * ------
@@ -29,18 +28,31 @@ struct StandardUnderlying {
     double q;
 
     StandardUnderlying(double S0_, double K_, double r_, double sigma_, double t_ = 1.,
-                       bool call_ = true, double q_ = 0.)
+                       bool call_ = true, double q_ = 0.) noexcept
         : S0(S0_), K(K_), r(r_), sigma(sigma_), t(t_), call(call_), q(q_) {}
 
-    // Default constructor: prices, rates and volatility zeroed, unit maturity, call contract
-    StandardUnderlying() : StandardUnderlying(0., 0., 0., 0.) {}
+    StandardUnderlying() noexcept : StandardUnderlying(0., 0., 0., 0.) {}
+
+    virtual ~StandardUnderlying() = default;
+    StandardUnderlying(const StandardUnderlying&) = default;
+    StandardUnderlying& operator=(const StandardUnderlying&) = default;
+    StandardUnderlying(StandardUnderlying&&) = default;
+    StandardUnderlying& operator=(StandardUnderlying&&) = default;
 };
 
-struct AssetDefaultParams : StandardUnderlying {
-    // a0 maps to S0, rf maps to r, sigma_a maps to sigma, L maps to K
+struct AssetDefaultParams {
+    double a0;       // Current asset value
+    double rf;       // Risk-free rate
+    double sigma_a;  // Asset volatility
+    double L;        // Debt face value
+    double t;        // Maturity
+    double q;        // Dividend rate
+
     AssetDefaultParams(double a0_, double rf_, double sigma_a_, double L_, double t_ = 1.,
-                       double q_ = 0.)
-        : StandardUnderlying(a0_, L_, rf_, sigma_a_, t_, true, q_) {}
+                       double q_ = 0.) noexcept
+        : a0(a0_), rf(rf_), sigma_a(sigma_a_), L(L_), t(t_), q(q_) {}
+
+    AssetDefaultParams() noexcept : AssetDefaultParams(0., 0., 0., 0.) {}
 };
 
 #endif

@@ -1,5 +1,6 @@
 // Implementation of prototypes in risk_neutral.h
 #include <cmath>
+#include <stdexcept>
 using std::exp;
 using std::log;
 using std::pow;
@@ -11,6 +12,13 @@ using boost::math::normal;
 #include "risk_neutral.hpp"
 #include "utils.hpp"
 
+static void validate_option_params(double S0, double K, double sigma, double t) {
+    if (sigma <= 0) throw std::invalid_argument("sigma must be positive");
+    if (t <= 0) throw std::invalid_argument("maturity must be positive");
+    if (S0 <= 0) throw std::invalid_argument("spot price must be positive");
+    if (K <= 0) throw std::invalid_argument("strike must be positive");
+}
+
 std::tuple<double, double, double> vanilla_option_price(const StandardUnderlying& params) {
     const auto& S0 = params.S0;
     const auto& K = params.K;
@@ -19,6 +27,8 @@ std::tuple<double, double, double> vanilla_option_price(const StandardUnderlying
     const auto& t = params.t;
     const auto& call = params.call;
     const auto& q = params.q;
+
+    validate_option_params(S0, K, sigma, t);
 
     auto Phi1 = 0.0;
     auto Phi2 = 0.0;
@@ -119,11 +129,13 @@ double get_asset_volatility(const double E, const double sigma_e, const double L
 }
 
 double get_vanilla_default_probability(const AssetDefaultParams& params) {
-    const auto& a0 = params.S0;
-    const auto& rf = params.r;
-    const auto& sigma_a = params.sigma;
-    const auto& L = params.K;
+    const auto& a0 = params.a0;
+    const auto& rf = params.rf;
+    const auto& sigma_a = params.sigma_a;
+    const auto& L = params.L;
     const auto& t = params.t;
+
+    validate_option_params(a0, L, sigma_a, t);
 
     normal N(0.0, 1.0);
 
@@ -133,12 +145,14 @@ double get_vanilla_default_probability(const AssetDefaultParams& params) {
 }
 
 double get_fpt_default_probability(const AssetDefaultParams& params, double gamma) {
-    const auto& a0 = params.S0;
-    const auto& rf = params.r;
-    const auto& sigma_a = params.sigma;
-    const auto& L = params.K;
+    const auto& a0 = params.a0;
+    const auto& rf = params.rf;
+    const auto& sigma_a = params.sigma_a;
+    const auto& L = params.L;
     const auto& q = params.q;
     const auto& t = params.t;
+
+    validate_option_params(a0, L, sigma_a, t);
 
     normal N(0.0, 1.0);
 

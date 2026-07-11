@@ -2,6 +2,7 @@
 Collect the most recent yield curves with smoothing.
 '''
 
+import warnings
 from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
@@ -76,7 +77,7 @@ def get_latest_yields():
     curve, sts = calibrate_ns_ols(np.array(Y.index, dtype=float), Y.values, tau0=1.0)
 
     if sts.status > 0:
-        Warning(f'Message: {sts.message}')
+        warnings.warn(f'Message: {sts.message}')
 
     # Curve object can be used to provide smoothness
     return curve

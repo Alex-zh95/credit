@@ -1,14 +1,10 @@
 #ifndef UTILS_H
 #define UTILS_H
 
- // Useful consts such as tolerances
- #ifndef TOL
- #define TOL 1e-3
- #endif
-
- #ifndef N_ITER
- #define N_ITER 50
- #endif
+namespace {
+    constexpr double TOL = 1e-3;
+    constexpr int N_ITER = 50;
+}
 
 /* Description
  * -----------
