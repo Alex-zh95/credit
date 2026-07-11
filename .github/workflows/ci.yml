@@ -36,19 +36,24 @@ jobs:
         run: pdm install
 
       - name: Build C++ extension
+        shell: bash
         run: |
-          cmake -B build > /tmp/cmake_config.log 2>&1
+          set -o pipefail
+          cmake -B build 2>&1 | tee /tmp/cmk_cfg.log
           EC1=$?
-          cmake --build build > /tmp/cmake_build.log 2>&1
-          EC2=$?
+          set +o pipefail
           if [ $EC1 -ne 0 ]; then
-            echo "::error file=CMakeLists.txt,title=cmake configure failed (exit $EC1)::"
-            grep -i -E "error|fatal" /tmp/cmake_config.log | head -10 | sed 's/^/::error::/'
+            echo "::error title=cmake configure failed (exit $EC1)::"
+            tail -20 /tmp/cmk_cfg.log | head -20 | while IFS= read -r line; do echo "::error::$line"; done
             exit $EC1
           fi
+          set -o pipefail
+          cmake --build build 2>&1 | tee /tmp/cmk_bld.log
+          EC2=$?
+          set +o pipefail
           if [ $EC2 -ne 0 ]; then
-            echo "::error file=CMakeLists.txt,title=cmake build failed (exit $EC2)::"
-            grep -i -E "error|fatal" /tmp/cmake_build.log | head -20 | sed 's/^/::error::/'
+            echo "::error title=cmake build failed (exit $EC2)::"
+            tail -40 /tmp/cmk_bld.log | head -40 | while IFS= read -r line; do echo "::error::$line"; done
             exit $EC2
           fi
 
