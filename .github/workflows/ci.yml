@@ -36,26 +36,46 @@ jobs:
         run: pdm install
 
       - name: Build C++ extension
-        shell: bash
+        continue-on-error: true
         run: |
-          set -o pipefail
           cmake -B build 2>&1 | tee /tmp/cmk_cfg.log
-          EC1=$?
-          set +o pipefail
-          if [ $EC1 -ne 0 ]; then
-            echo "::error title=cmake configure failed (exit $EC1)::"
-            tail -20 /tmp/cmk_cfg.log | head -20 | while IFS= read -r line; do echo "::error::$line"; done
-            exit $EC1
-          fi
-          set -o pipefail
+          RC1=${PIPESTATUS[0]}
           cmake --build build 2>&1 | tee /tmp/cmk_bld.log
-          EC2=$?
-          set +o pipefail
-          if [ $EC2 -ne 0 ]; then
-            echo "::error title=cmake build failed (exit $EC2)::"
-            tail -40 /tmp/cmk_bld.log | head -40 | while IFS= read -r line; do echo "::error::$line"; done
-            exit $EC2
+          RC2=${PIPESTATUS[0]}
+          echo "CFG=$RC1 BLD=$RC2"
+          echo "$RC1" > /tmp/ci_cfg_rc.txt
+          echo "$RC2" > /tmp/ci_bld_rc.txt
+
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs-${{ github.run_id }}
+          path: |
+            /tmp/cmk_cfg.log
+            /tmp/cmk_bld.log
+            /tmp/ci_cfg_rc.txt
+            /tmp/ci_bld_rc.txt
+          retention-days: 1
+
+      - name: Fail if build errored
+        if: always()
+        run: |
+          CFG=$(cat /tmp/ci_cfg_rc.txt 2>/dev/null || echo 0)
+          BLD=$(cat /tmp/ci_bld_rc.txt 2>/dev/null || echo 0)
+          echo "cmake config exit code: $CFG"
+          echo "cmake build exit code: $BLD"
+          if [ "$CFG" != "0" ]; then
+            echo "::error title=cmake configure failed ($CFG)::"
+            head -20 /tmp/cmk_cfg.log 2>/dev/null
+            exit 1
           fi
+          if [ "$BLD" != "0" ]; then
+            echo "::error title=cmake build failed ($BLD)::"
+            tail -40 /tmp/cmk_bld.log 2>/dev/null
+            exit 1
+          fi
+          echo "Build succeeded"
 
       - name: Run C++ tests
         run: cd build && ctest --output-on-failure
