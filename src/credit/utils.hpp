@@ -2,6 +2,7 @@
 #define UTILS_H
 
 #include <cmath>
+#include <concepts>
 #include <cstdint>
 #include <stdexcept>
 
@@ -48,7 +49,8 @@ inline constexpr int N_ITER = 50;
  * Throws std::invalid_argument if x0 <= 0, and std::runtime_error if no sign
  * change can be bracketed, i.e. the function never crosses zero in reach.
  */
-template <typename Func, typename T>
+template <typename Func, std::floating_point T>
+    requires std::invocable<Func&, T>
 T bracket_root(Func&& f, T x0, T tol = TOL, int n_iter = N_ITER)
 {
     if (x0 <= T(0))

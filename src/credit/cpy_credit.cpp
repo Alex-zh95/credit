@@ -3,26 +3,22 @@
  * interface.
  */
 
-#include <memory>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h> // Needed for binding STL containers
 #include <tuple>
+#include <utility>
 namespace py = pybind11;
 
 #include "params.hpp"
 #include "risk_neutral.hpp"
 #include "stvol.hpp"
 
-/* C++ Interfaces for StVol::HestonCallMdl
- * This is due to not being able to pass std::unique_ptr<...> as arguments
- * as Python does not implement such concepts.
+/* C++ Interfaces for StVol::HestonCallMdl - the model takes its underlying by
+ * value, so pybind's copies pass straight through.
  */
 
 double get_Heston_call_price(StVol::HestonUnderlying U0, double strike, double t = 1) {
-    // HestonUnderlying is copyable (inherits StandardUnderlying), so copy-construct directly
-    auto _U = std::make_unique<StVol::HestonUnderlying>(U0);
-
-    StVol::HestonCallMdl mdl(std::move(_U), strike, t);
+    StVol::HestonCallMdl mdl(std::move(U0), strike, t);
     mdl.calc_option_price();
 
     return mdl.get_option_price();
@@ -32,14 +28,12 @@ std::tuple<double, StVol::HestonUnderlying>
 get_Heston_default_probability(StVol::HestonUnderlying U_fitted, double asset, double debt,
                                double maturity = 1.0) {
     // Build a Heston structural model representing the equity characteristics
-    auto _U = std::make_unique<StVol::HestonUnderlying>(U_fitted);
-
-    StVol::HestonCallMdl call(std::move(_U), debt);
+    StVol::HestonCallMdl call(std::move(U_fitted), debt);
 
     // Convert structural model for equity into structural model for asset
-    auto _V = StVol::HestonAssetVolatilityImplied(call, asset, debt, maturity);
+    auto V = StVol::HestonAssetVolatilityImplied(call, asset, debt, maturity);
 
-    StVol::HestonCallMdl structure(std::move(_V), debt);
+    StVol::HestonCallMdl structure(std::move(V), debt);
 
     return std::make_tuple(1. - structure.get_rn_exercise_probability(),
                            structure.get_underlying());

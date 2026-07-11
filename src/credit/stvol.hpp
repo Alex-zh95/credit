@@ -2,13 +2,10 @@
 #define STVOL_HPP
 
 #include <complex>
-#include <memory>
+#include <utility>
 #include <vector>
 
 #include "params.hpp"
-
-// General Note: Move constructors implicitly generated as long as no copy constructor/assignment
-// defined, other than delete, or user-generated destructor.
 
 namespace StVol {
     /**
@@ -57,64 +54,41 @@ namespace StVol {
               vLambda(volParams.at(4)) {}
     };
 
+    // HestonUnderlying is a small copyable value type, so the model holds it by
+    // value: rule of zero applies and copy/move follow from the member (no manual
+    // rule-of-five boilerplate, no heap allocation).
     class HestonCallMdl {
       public:
         // Main constructor - strike and maturity stored on the underlying (K, t)
-        HestonCallMdl(std::unique_ptr<HestonUnderlying> _underlying, double _K, double _t = 1.)
+        HestonCallMdl(HestonUnderlying _underlying, double _K, double _t = 1.)
             : underlying(std::move(_underlying)), P(0.0) {
-            underlying->K = _K;
-            underlying->t = _t;
+            underlying.K = _K;
+            underlying.t = _t;
         }
 
         // Alternative constructor - pass in a std::vector<double> for volatility parameters
         HestonCallMdl(const StandardUnderlying& params, const std::vector<double>& volParams)
-            : underlying(std::make_unique<HestonUnderlying>(params, volParams)), P(0.0) {}
-
-        HestonCallMdl(const HestonCallMdl& other) : P(other.P) {
-            if (other.underlying)
-                underlying = std::make_unique<HestonUnderlying>(*other.underlying);
-        }
-
-        HestonCallMdl(HestonCallMdl&& other) noexcept
-            : underlying(std::move(other.underlying)), P(other.P) {}
-
-        HestonCallMdl& operator=(const HestonCallMdl& other) {
-            if (this != &other) {
-                underlying = other.underlying
-                                 ? std::make_unique<HestonUnderlying>(*other.underlying)
-                                 : nullptr;
-                P = other.P;
-            }
-            return *this;
-        }
-
-        HestonCallMdl& operator=(HestonCallMdl&& other) noexcept {
-            if (this != &other) {
-                underlying = std::move(other.underlying);
-                P = other.P;
-            }
-            return *this;
-        }
+            : underlying(params, volParams), P(0.0) {}
 
         // Getters and setters
-        void set_strike(double _K) { underlying->K = _K; P = 0; }
-        void set_maturity(double _t) { underlying->t = _t; P = 0; }
-        void set_underlying(std::unique_ptr<HestonUnderlying> _underlying) {
+        void set_strike(double _K) { underlying.K = _K; P = 0; }
+        void set_maturity(double _t) { underlying.t = _t; P = 0; }
+        void set_underlying(HestonUnderlying _underlying) {
             underlying = std::move(_underlying); P = 0;
         }
 
-        double get_strike() const noexcept { return underlying->K; }
-        double get_maturity() const noexcept { return underlying->t; }
+        double get_strike() const noexcept { return underlying.K; }
+        double get_maturity() const noexcept { return underlying.t; }
         double get_option_price() const noexcept { return P; }
 
         // Read-only const access to the Underlying struct
-        const HestonUnderlying& get_underlying() const noexcept { return *underlying; }
+        const HestonUnderlying& get_underlying() const noexcept { return underlying; }
 
         // Get risk-neutral probability of exercise (asset > strike)
-        double get_rn_exercise_probability();
+        double get_rn_exercise_probability() const;
 
         // Get delta of European call option.
-        double get_delta();
+        double get_delta() const;
 
         // Description: Main pricing function of the Heston model to calculate.
         void calc_option_price();
@@ -150,7 +124,7 @@ namespace StVol {
          */
         std::complex<double> integrand(double phi) const;
 
-        std::unique_ptr<HestonUnderlying> underlying;
+        HestonUnderlying underlying;
         double P;
     };
 
@@ -169,13 +143,12 @@ namespace StVol {
      * std::vector<double> market_prices:  Prices of those call options
      * std::vector<double> trade_volumes:  Volume of options traded.
      *
-     * Returns:    std::unique_ptr<Underlying>:        Optimized underlying parameters
+     * Returns:    HestonUnderlying:       Optimized underlying parameters
      */
-    std::unique_ptr<HestonUnderlying> fitHeston(double spot_price, std::vector<double> strikes,
-                                                std::vector<double> r,
-                                                std::vector<double> maturities,
-                                                std::vector<double> market_prices,
-                                                std::vector<double> trade_volumes);
+    HestonUnderlying fitHeston(double spot_price, std::vector<double> strikes,
+                               std::vector<double> r, std::vector<double> maturities,
+                               std::vector<double> market_prices,
+                               std::vector<double> trade_volumes);
 
     /**
      * Description
@@ -184,16 +157,14 @@ namespace StVol {
      *
      * Params
      * ------
-     * HestonCallMdl& mdl:             Reference to Heston model object
+     * const HestonCallMdl& mdl:       Reference to Heston model object
      * double asset:                   Asset value of underlying company
      * double debt:                    Debt value of the underlying company
      * double maturity:                Maturity of using a call option to model company financing
      * structure
      */
-
-    std::unique_ptr<StVol::HestonUnderlying> HestonAssetVolatilityImplied(StVol::HestonCallMdl& mdl,
-                                                                          double asset, double debt,
-                                                                          double maturity);
+    HestonUnderlying HestonAssetVolatilityImplied(const HestonCallMdl& mdl, double asset,
+                                                  double debt, double maturity);
 } // namespace StVol
 
 #endif // STVOL_HPP

@@ -14,15 +14,15 @@
 // Test case 1: Heston pricing model validation
 BOOST_AUTO_TEST_CASE(TestHestonPricing) {
     // Setup parameters based on original implementation
-    auto U = std::make_unique<StVol::HestonUnderlying>();
-    U->S0 = 100.;
-    U->v0 = 0.1;
-    U->r = 0.03; // risk-free rate inherited from StandardUnderlying
-    U->alpha = 1.5768;
-    U->vTheta = 0.0398;
-    U->vSig = 0.3;
-    U->vLambda = 0.575;
-    U->rho = -0.5711;
+    StVol::HestonUnderlying U;
+    U.S0 = 100.;
+    U.v0 = 0.1;
+    U.r = 0.03; // risk-free rate inherited from StandardUnderlying
+    U.alpha = 1.5768;
+    U.vTheta = 0.0398;
+    U.vSig = 0.3;
+    U.vLambda = 0.575;
+    U.rho = -0.5711;
 
     // Expected outcome comparison
     const double expected_price = 11.540361819355377;
@@ -59,8 +59,8 @@ BOOST_AUTO_TEST_CASE(TestHestonAssetVolatility) {
     auto V = StVol::HestonAssetVolatilityImplied(mdl, 150., 50., 1.5);
 
     // Outputting values for inspection (equivalent to original console output)
-    BOOST_TEST_MESSAGE("Spot price: " << V->S0);
-    BOOST_TEST_MESSAGE("Spot volatility: " << V->v0);
+    BOOST_TEST_MESSAGE("Spot price: " << V.S0);
+    BOOST_TEST_MESSAGE("Spot volatility: " << V.v0);
     // Add more checks/assertions here if specific values were expected in this scenario.
 }
 
@@ -78,14 +78,14 @@ void Heston_calibration_demo() {
 
     // Outputting calibration results
     std::cout << "--- Heston Calibration Demo ---\n";
-    std::cout << "Spot price:            " << U->S0 << "\n";
-    std::cout << "Spot volatility:       " << U->v0 << "\n";
-    std::cout << "Risk-free rate:        " << U->r << "\n";
-    std::cout << "Mean-reversion rate:   " << U->alpha << "\n";
-    std::cout << "Long-term mean var:    " << U->vTheta << "\n";
-    std::cout << "Vol of vol:            " << U->vSig << "\n";
-    std::cout << "Market price of vol:   " << U->vLambda << "\n";
-    std::cout << "Correlation vol/price: " << U->rho << "\n";
+    std::cout << "Spot price:            " << U.S0 << "\n";
+    std::cout << "Spot volatility:       " << U.v0 << "\n";
+    std::cout << "Risk-free rate:        " << U.r << "\n";
+    std::cout << "Mean-reversion rate:   " << U.alpha << "\n";
+    std::cout << "Long-term mean var:    " << U.vTheta << "\n";
+    std::cout << "Vol of vol:            " << U.vSig << "\n";
+    std::cout << "Market price of vol:   " << U.vLambda << "\n";
+    std::cout << "Correlation vol/price: " << U.rho << "\n";
 }
 
 // Note: The original int main() is replaced by the Boost automatic test runner setup.
