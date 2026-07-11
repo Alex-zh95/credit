@@ -36,37 +36,9 @@ jobs:
         run: pdm install
 
       - name: Build C++ extension
-        continue-on-error: true
         run: |
-          cmake -B build > /tmp/cmk_cfg.log 2>&1
-          echo $? > /tmp/ci_cfg_rc.txt
-          cmake --build build > /tmp/cmk_bld.log 2>&1
-          echo $? > /tmp/ci_bld_rc.txt
-          echo "config=$(cat /tmp/ci_cfg_rc.txt) build=$(cat /tmp/ci_bld_rc.txt)"
-
-      - name: Upload build logs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-logs-${{ github.run_id }}
-          path: |
-            /tmp/cmk_cfg.log
-            /tmp/cmk_bld.log
-            /tmp/ci_cfg_rc.txt
-            /tmp/ci_bld_rc.txt
-          retention-days: 1
-
-      - name: Fail if build errored
-        if: always()
-        run: |
-          EC1=$(cat /tmp/ci_cfg_rc.txt 2>/dev/null)
-          EC2=$(cat /tmp/ci_bld_rc.txt 2>/dev/null)
-          echo "config_exit=$EC1 build_exit=$EC2"
-          [ -z "$EC1" ] && { echo "::error::Missing config exit code"; exit 1; }
-          [ -z "$EC2" ] && { echo "::error::Missing build exit code"; exit 1; }
-          [ "$EC1" != "0" ] && { echo "::error::cmake configure failed ($EC1)"; head -10 /tmp/cmk_cfg.log; exit 1; }
-          [ "$EC2" != "0" ] && { echo "::error::cmake build failed ($EC2)"; tail -30 /tmp/cmk_bld.log; exit 1; }
-          echo "Build succeeded"
+          cmake -B build
+          cmake --build build
 
       - name: Run C++ tests
         run: cd build && ctest --output-on-failure
