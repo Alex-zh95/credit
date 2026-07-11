@@ -1,6 +1,24 @@
 #ifndef PARAMS_HPP
 #define PARAMS_HPP
 
+/**
+ * Description
+ * -----------
+ * Base data structure holding parameters common to underlying instruments and the
+ * (vanilla) option contracts written on them. Specialized underlyings (e.g.
+ * StVol::HestonUnderlying, AssetDefaultParams) inherit from this rather than
+ * redefining common symbols.
+ *
+ * Params
+ * ------
+ * double S0:          Spot/current price of underlying
+ * double K:           Strike price
+ * double r:           Risk-free interest rate
+ * double sigma:       Volatility of observed price
+ * double t:           Duration of the contract (expiry)
+ * bool call:          Whether the contract is a call or a put
+ * double q:           Assumed constant and continuous dividend rate
+ */
 struct StandardUnderlying {
     double S0;
     double K;
@@ -13,6 +31,9 @@ struct StandardUnderlying {
     StandardUnderlying(double S0_, double K_, double r_, double sigma_, double t_ = 1.,
                        bool call_ = true, double q_ = 0.)
         : S0(S0_), K(K_), r(r_), sigma(sigma_), t(t_), call(call_), q(q_) {}
+
+    // Default constructor: prices, rates and volatility zeroed, unit maturity, call contract
+    StandardUnderlying() : StandardUnderlying(0., 0., 0., 0.) {}
 };
 
 struct AssetDefaultParams : StandardUnderlying {

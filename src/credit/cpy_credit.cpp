@@ -19,17 +19,10 @@ namespace py = pybind11;
  */
 
 double get_Heston_call_price(StVol::HestonUnderlying U0, double strike, double t = 1) {
-    auto _U = std::make_unique<StVol::HestonUnderlying>();
-    _U->S0 = U0.S0;
-    _U->v0 = U0.v0;
-    _U->alpha = U0.alpha;
-    _U->vTheta = U0.vTheta;
-    _U->vSig = U0.vSig;
-    _U->vLambda = U0.vLambda;
-    _U->rho = U0.rho;
-    _U->rf = U0.rf;
+    // HestonUnderlying is copyable (inherits StandardUnderlying), so copy-construct directly
+    auto _U = std::make_unique<StVol::HestonUnderlying>(U0);
 
-    StVol::HestonCallMdl mdl(std::move(_U), strike);
+    StVol::HestonCallMdl mdl(std::move(_U), strike, t);
     mdl.calc_option_price();
 
     return mdl.get_option_price();
@@ -39,15 +32,7 @@ std::tuple<double, StVol::HestonUnderlying>
 get_Heston_default_probability(StVol::HestonUnderlying U_fitted, double asset, double debt,
                                double maturity = 1.0) {
     // Build a Heston structural model representing the equity characteristics
-    auto _U = std::make_unique<StVol::HestonUnderlying>();
-    _U->S0 = U_fitted.S0;
-    _U->v0 = U_fitted.v0;
-    _U->alpha = U_fitted.alpha;
-    _U->vTheta = U_fitted.vTheta;
-    _U->vSig = U_fitted.vSig;
-    _U->vLambda = U_fitted.vLambda;
-    _U->rho = U_fitted.rho;
-    _U->rf = U_fitted.rf;
+    auto _U = std::make_unique<StVol::HestonUnderlying>(U_fitted);
 
     StVol::HestonCallMdl call(std::move(_U), debt);
 
@@ -98,17 +83,33 @@ PYBIND11_MODULE(cpy_credit, m) {
           "Obtain minimum rates on line. Set p=0 and i=risk-free rate if not using options",
           py::arg("y"), py::arg("p"), py::arg("i"));
 
-    // Bindings to stvol.hpp
-    py::class_<StVol::HestonUnderlying>(m, "Underlying")
+    // Bindings to params.hpp: base class holding parameters common to all underlyings
+    py::class_<StandardUnderlying>(m, "StandardUnderlying")
+        .def(py::init<double, double, double, double, double, bool, double>(), py::arg("S0"),
+             py::arg("K"), py::arg("r"), py::arg("sigma"), py::arg("t") = 1.,
+             py::arg("call") = true, py::arg("q") = 0.)
         .def(py::init<>())
-        .def_readwrite("S0", &StVol::HestonUnderlying::S0)
+        .def_readwrite("S0", &StandardUnderlying::S0)
+        .def_readwrite("K", &StandardUnderlying::K)
+        .def_readwrite("r", &StandardUnderlying::r)
+        .def_readwrite("sigma", &StandardUnderlying::sigma)
+        .def_readwrite("t", &StandardUnderlying::t)
+        .def_readwrite("call", &StandardUnderlying::call)
+        .def_readwrite("q", &StandardUnderlying::q);
+
+    // Bindings to stvol.hpp: HestonUnderlying extends StandardUnderlying
+    py::class_<StVol::HestonUnderlying, StandardUnderlying>(m, "Underlying")
+        .def(py::init<>())
         .def_readwrite("v0", &StVol::HestonUnderlying::v0)
         .def_readwrite("alpha", &StVol::HestonUnderlying::alpha)
         .def_readwrite("vSig", &StVol::HestonUnderlying::vSig)
         .def_readwrite("rho", &StVol::HestonUnderlying::rho)
         .def_readwrite("vTheta", &StVol::HestonUnderlying::vTheta)
         .def_readwrite("vLambda", &StVol::HestonUnderlying::vLambda)
-        .def_readwrite("rf", &StVol::HestonUnderlying::rf);
+        // Backwards-compatible alias: "rf" maps onto the inherited risk-free rate "r"
+        .def_property(
+            "rf", [](const StVol::HestonUnderlying& u) { return u.r; },
+            [](StVol::HestonUnderlying& u, double rf) { u.r = rf; });
 
     m.def("fit_Heston", &StVol::fitHeston, "Fit a Heston model to available call options data",
           py::arg("S0"), py::arg("Ks"), py::arg("rfs"), py::arg("Ts"), py::arg("Ps"),

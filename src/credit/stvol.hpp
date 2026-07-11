@@ -5,6 +5,8 @@
 #include <memory>
 #include <vector>
 
+#include "params.hpp"
+
 // General Note: Move constructors implicitly generated as long as no copy constructor/assignment
 // defined, other than delete, or user-generated destructor.
 
@@ -12,76 +14,79 @@ namespace StVol {
     /**
      * Description
      * -----------
-     * Data structure to hold the parameters of underlying instrument.
+     * Data structure to hold the parameters of an underlying instrument following
+     * Heston (stochastic volatility) dynamics.
+     *
+     * Inherits the common contract/underlying parameters from StandardUnderlying
+     * (S0, K, r, sigma, t, call, q), where:
+     *      double S0:          Spot/current price of underlying
+     *      double K:           Strike price
+     *      double r:           Risk-free interest rate
+     *      double t:           Duration of the contract (expiry)
+     *
+     * and extends with the stochastic volatility parameters:
      *
      * Params
      * ------
-     * double S0:          Spot/current price of underlying
      * double v0:          Spot/current volatility of underlying
      * double alpha:       Mean reversion rate
      * double vSig:        Volatility of volatility
      * double rho:         Correlation parameter (volatility to price)
      * double vTheta:      Long-run variance
      * double vLamdba:     Market price of volatility (risk premium)
-     * double rf:          Risk-free interest rate
      */
-    struct HestonUnderlying {
-        double S0;
+    struct HestonUnderlying : StandardUnderlying {
         double v0;
         double alpha;
         double vSig;
         double rho;
         double vTheta;
         double vLambda;
-        double rf;
+
+        // Default constructor - all parameters zeroed (unit maturity, call from base)
+        HestonUnderlying()
+            : StandardUnderlying(), v0(0.), alpha(0.), vSig(0.), rho(0.), vTheta(0.), vLambda(0.) {}
+
+        /**
+         * Construct from base contract parameters plus a std::vector<double> of
+         * volatility parameters, in the order: v0, alpha, vTheta, vSig, vLambda, rho
+         */
+        HestonUnderlying(const StandardUnderlying& params, const std::vector<double>& volParams)
+            : StandardUnderlying(params), v0(volParams.at(0)), alpha(volParams.at(1)),
+              vSig(volParams.at(3)), rho(volParams.at(5)), vTheta(volParams.at(2)),
+              vLambda(volParams.at(4)) {}
     };
 
     class HestonCallMdl {
       public:
-        // Main constructor
+        // Main constructor - strike and maturity stored on the underlying (K, t)
         HestonCallMdl(std::unique_ptr<HestonUnderlying> _underlying, double _K, double _t = 1.)
-            : underlying(std::move(_underlying)), K(_K), t(_t), P(0.0) {}
+            : underlying(std::move(_underlying)), P(0.0) {
+            underlying->K = _K;
+            underlying->t = _t;
+        }
 
         // Alternative constructor - pass in a std::vector<double> for volatility parameters
         HestonCallMdl(const StandardUnderlying& params, const std::vector<double>& volParams)
-            : K(params.K), t(params.t), P(0.0) {
-            underlying = std::make_unique<HestonUnderlying>();
-            underlying->S0 = params.S0;
-            underlying->v0 = volParams.at(0);
-            underlying->alpha = volParams.at(1);
-            underlying->vTheta = volParams.at(2);
-            underlying->vSig = volParams.at(3);
-            underlying->vLambda = volParams.at(4);
-            underlying->rho = volParams.at(5);
-            underlying->rf = params.r;
-        }
+            : underlying(std::make_unique<HestonUnderlying>(params, volParams)), P(0.0) {}
 
         // Copy constructor
-        HestonCallMdl(const HestonCallMdl& other) {
+        HestonCallMdl(const HestonCallMdl& other) : P(other.P) {
             if (other.underlying)
                 underlying = std::make_unique<HestonUnderlying>(*other.underlying);
-            t = other.t;
-            P = other.P;
-            K = other.K;
         }
 
         // Move constructor
-        HestonCallMdl(HestonCallMdl&& other) {
-            if (this != &other) {
-                underlying = std::move(other.underlying);
-                t = other.t;
-                P = other.P;
-                K = other.K;
-            }
-        }
+        HestonCallMdl(HestonCallMdl&& other)
+            : underlying(std::move(other.underlying)), P(other.P) {}
 
         // Copy assignment operator
         HestonCallMdl& operator=(const HestonCallMdl& other) {
             if (this != &other) {
-                underlying = std::make_unique<HestonUnderlying>(*other.underlying);
-                t = other.t;
+                underlying = other.underlying
+                                 ? std::make_unique<HestonUnderlying>(*other.underlying)
+                                 : nullptr;
                 P = other.P;
-                K = other.K;
             }
 
             return *this;
@@ -91,23 +96,21 @@ namespace StVol {
         HestonCallMdl& operator=(HestonCallMdl&& other) {
             if (this != &other) {
                 underlying = std::move(other.underlying);
-                t = other.t;
                 P = other.P;
-                K = other.K;
             }
 
             return *this;
         }
 
         // Getters and setters
-        void set_strike(double _K) { K = _K; }
-        void set_maturity(double _t) { t = _t; }
+        void set_strike(double _K) { underlying->K = _K; }
+        void set_maturity(double _t) { underlying->t = _t; }
         void set_underlying(std::unique_ptr<HestonUnderlying> _underlying) {
             underlying = std::move(_underlying);
         }
 
-        double get_strike() { return K; }
-        double get_maturity() { return t; }
+        double get_strike() { return underlying->K; }
+        double get_maturity() { return underlying->t; }
         double get_option_price() { return P; }
 
         // Read-only const access to the Underlying struct
@@ -154,8 +157,6 @@ namespace StVol {
         std::complex<double> integrand(double phi);
 
         std::unique_ptr<HestonUnderlying> underlying;
-        double K;
-        double t;
         double P;
     };
 

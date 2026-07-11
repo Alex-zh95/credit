@@ -21,6 +21,8 @@ using boost::math::quadrature::trapezoidal;
 #include "utils.hpp"
 
 std::complex<double> StVol::HestonCallMdl::charFn(std::complex<double> phi) {
+    const auto t = underlying->t;
+
     auto a = underlying->alpha * underlying->vTheta;
     auto b = underlying->alpha + underlying->vLambda;
 
@@ -34,7 +36,7 @@ std::complex<double> StVol::HestonCallMdl::charFn(std::complex<double> phi) {
 
     // Characteristic fn via the above components. This takes the form
     // exp(x1) * x2 * exp(x3)
-    auto exp_x1 = exp(underlying->rf * phi * 1i * t);
+    auto exp_x1 = exp(underlying->r * phi * 1i * t);
     auto x2 = pow(underlying->S0, (phi * 1i)) *
               pow((1. - g * exp(d * t)) / (1. - g), (-2. * a / pow(underlying->vSig, 2)));
     auto exp_x2 = exp(a * t * (b - underlying->rho * underlying->vSig * phi * 1i + d) /
@@ -46,7 +48,9 @@ std::complex<double> StVol::HestonCallMdl::charFn(std::complex<double> phi) {
 }
 
 std::complex<double> StVol::HestonCallMdl::integrand(double phi) {
-    auto numerator = exp(underlying->rf * t) * charFn(phi - 1i) - K * charFn(phi);
+    const auto K = underlying->K;
+
+    auto numerator = exp(underlying->r * underlying->t) * charFn(phi - 1i) - K * charFn(phi);
     auto denominator = 1i * phi * pow(K, 1i * phi);
 
     return numerator / denominator;
@@ -58,14 +62,15 @@ void StVol::HestonCallMdl::calc_option_price() {
 
     // Price is given by 0.5*(S0 - Ke^(-rf*t)) + 1/pi * integral(realIntegrand)
     auto integrated = trapezoidal(realIntegrand, 1e-3, 1e3);
-    P = 0.5 * (underlying->S0 - K * exp(-underlying->rf * t)) + M_1_PI * integrated;
+    P = 0.5 * (underlying->S0 - underlying->K * exp(-underlying->r * underlying->t)) +
+        M_1_PI * integrated;
 }
 
 double StVol::HestonCallMdl::get_delta() {
     auto realIntegrand = [this](double _phi) {
         auto phiShift = _phi - 1i;
         auto numerator = charFn(phiShift);
-        auto denominator = 1i * _phi * pow(K, 1i * _phi);
+        auto denominator = 1i * _phi * pow(underlying->K, 1i * _phi);
         return real(numerator / denominator);
     };
 
@@ -76,7 +81,7 @@ double StVol::HestonCallMdl::get_delta() {
 double StVol::HestonCallMdl::get_rn_exercise_probability() {
     auto realIntegrand = [this](double _phi) {
         auto numerator = charFn(_phi);
-        auto denominator = 1i * _phi * pow(K, 1i * _phi);
+        auto denominator = 1i * _phi * pow(underlying->K, 1i * _phi);
         return real(numerator / denominator);
     };
 
@@ -189,16 +194,10 @@ StVol::fitHeston(double spot_price, std::vector<double> strikes, std::vector<dou
     double minf;
     optimizer.optimize(xVars, minf);
 
-    auto result = std::make_unique<StVol::HestonUnderlying>();
-    result->S0 = spot_price;
-    result->v0 = xVars.at(0);
-    result->alpha = xVars.at(1);
-    result->vTheta = xVars.at(2);
-    result->vSig = xVars.at(3);
-    result->vLambda = xVars.at(4);
-    result->rho = xVars.at(5);
-    result->rf = r.at(0);
-    return result;
+    // xVars order (v0, alpha, vTheta, vSig, vLambda, rho) matches the
+    // HestonUnderlying volatility-parameter constructor
+    return std::make_unique<StVol::HestonUnderlying>(
+        StandardUnderlying(spot_price, 0.0, r.at(0), 0.0), xVars);
 }
 
 std::unique_ptr<StVol::HestonUnderlying>
@@ -208,11 +207,11 @@ StVol::HestonAssetVolatilityImplied(StVol::HestonCallMdl& mdl, double asset, dou
 
     // Use the Ito-derived relationship sig_E * E = Delta * sig_A * A,
     // to derive the spot and long-term volatility
-    U->v0 = get_asset_volatility(asset, mdl.get_underlying().v0, debt, mdl.get_underlying().rf,
+    U->v0 = get_asset_volatility(asset, mdl.get_underlying().v0, debt, mdl.get_underlying().r,
                                  maturity);
 
     U->vTheta = get_asset_volatility(asset, mdl.get_underlying().vTheta, debt,
-                                     mdl.get_underlying().rf, maturity);
+                                     mdl.get_underlying().r, maturity);
 
     // Keeping it simple, the relationship above states sig_E and sig_A
     // are linear proportional at time t. So for volatility of volatility,
@@ -221,7 +220,7 @@ StVol::HestonAssetVolatilityImplied(StVol::HestonCallMdl& mdl, double asset, dou
 
     // For correlation, we need the implied equity to asset delta
     // Simplify by using standard Black-Scholes
-    auto rf = mdl.get_underlying().rf;
+    auto rf = mdl.get_underlying().r;
     auto [implied_E, implied_asset_equity_delta, Phi2] =
         vanilla_option_price(StandardUnderlying(asset, debt, rf, rf, maturity));
 
@@ -240,9 +239,9 @@ StVol::HestonAssetVolatilityImplied(StVol::HestonCallMdl& mdl, double asset, dou
     // follows the same exchange rate as that for vSig or mean reversion
     U->vLambda = mdl.get_underlying().vLambda * U->v0 / mdl.get_underlying().v0;
 
-    // Remaining params
+    // Remaining params (inherited from StandardUnderlying)
     U->S0 = asset;
-    U->rf = mdl.get_underlying().rf;
+    U->r = mdl.get_underlying().r;
 
     return U;
 }
