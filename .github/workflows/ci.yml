@@ -37,8 +37,8 @@ jobs:
 
       - name: Build C++ extension
         run: |
-          cmake -B build 2>&1
-          cmake --build build --verbose 2>&1
+          cmake -B build
+          cmake --build build
 
       - name: Run C++ tests
         run: cd build && ctest --output-on-failure

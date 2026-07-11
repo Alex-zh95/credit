@@ -17,6 +17,7 @@ set(CMAKE_PREFIX_PATH "/opt/homebrew/")
 include_directories("/opt/homebrew/include/")
 
 # --- Find Dependencies ---
+set(PYBIND11_FINDPYTHON ON)
 find_package(pybind11 REQUIRED)
 pybind11_add_module(cpy_credit ${SOURCES})
 
