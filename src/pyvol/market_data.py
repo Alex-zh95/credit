@@ -49,7 +49,7 @@ def get_latest_yields():
     target_url = f'{url}{latest}'
 
     # Using this target URL, download the data
-    response = requests.get(target_url)
+    response = requests.get(target_url, timeout=30)
 
     if response.status_code != 200:
         raise Exception('Access problem')

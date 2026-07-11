@@ -44,3 +44,7 @@ build/*
 .cache/*
 .clangd
 src/credit.egg-info/*
+
+# CMake/CTest generated files
+CMakeFiles/
+Testing/
