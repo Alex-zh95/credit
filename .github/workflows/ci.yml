@@ -37,11 +37,15 @@ jobs:
 
       - name: Build C++ extension
         run: |
-          cmake -B build > /tmp/cmk_cfg.log 2>&1; rc=$?; cat /tmp/cmk_cfg.log; [ $rc -eq 0 ]
-          cmake --build build > /tmp/cmk_bld.log 2>&1; rc=$?; cat /tmp/cmk_bld.log; [ $rc -eq 0 ]
+          brew_prefix="$(brew --prefix)"
+          cmake -S . -B build \
+            -DCMAKE_PREFIX_PATH="$brew_prefix" \
+            -DCMAKE_INCLUDE_PATH="$brew_prefix/include" \
+            -DCMAKE_LIBRARY_PATH="$brew_prefix/lib"
+          cmake --build build
 
       - name: Run C++ tests
-        run: cd build && ctest --output-on-failure
+        run: ctest --test-dir build --output-on-failure
 
       - name: Upload cmake logs on failure
         if: failure()
