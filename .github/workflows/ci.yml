@@ -37,11 +37,19 @@ jobs:
 
       - name: Build C++ extension
         run: |
-          cmake -B build
-          cmake --build build
+          cmake -B build > /tmp/cmk_cfg.log 2>&1; rc=$?; cat /tmp/cmk_cfg.log; [ $rc -eq 0 ]
+          cmake --build build > /tmp/cmk_bld.log 2>&1; rc=$?; cat /tmp/cmk_bld.log; [ $rc -eq 0 ]
 
       - name: Run C++ tests
         run: cd build && ctest --output-on-failure
+
+      - name: Upload cmake logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cmake-logs-${{ github.run_id }}
+          path: /tmp/cmk_*.log
+          retention-days: 7
 
       - name: Run Python tests
         continue-on-error: true
