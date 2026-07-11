@@ -17,7 +17,7 @@ BOOST_AUTO_TEST_CASE(TestHestonPricing) {
     auto U = std::make_unique<StVol::HestonUnderlying>();
     U->S0 = 100.;
     U->v0 = 0.1;
-    U->rf = 0.03;
+    U->r = 0.03; // risk-free rate inherited from StandardUnderlying
     U->alpha = 1.5768;
     U->vTheta = 0.0398;
     U->vSig = 0.3;
@@ -80,7 +80,7 @@ void Heston_calibration_demo() {
     std::cout << "--- Heston Calibration Demo ---\n";
     std::cout << "Spot price:            " << U->S0 << "\n";
     std::cout << "Spot volatility:       " << U->v0 << "\n";
-    std::cout << "Risk-free rate:        " << U->rf << "\n";
+    std::cout << "Risk-free rate:        " << U->r << "\n";
     std::cout << "Mean-reversion rate:   " << U->alpha << "\n";
     std::cout << "Long-term mean var:    " << U->vTheta << "\n";
     std::cout << "Vol of vol:            " << U->vSig << "\n";
