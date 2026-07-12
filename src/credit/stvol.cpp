@@ -54,7 +54,11 @@ std::complex<double> StVol::HestonCallMdl::charFn(std::complex<double> phi) cons
 std::complex<double> StVol::HestonCallMdl::integrand(double phi) const {
     const auto K = underlying.K;
 
-    auto numerator = exp(underlying.r * underlying.t) * charFn(phi - 1i) - K * charFn(phi);
+    // Single-integral form of C = S0*P1 - K*e^(-rt)*P2: the P1 leg uses
+    // charFn(phi - i) scaled by S0/f(-i) = e^(-rt), so both legs carry the
+    // discount factor e^(-rt)
+    auto numerator =
+        exp(-underlying.r * underlying.t) * (charFn(phi - 1i) - K * charFn(phi));
     auto denominator = 1i * phi * pow(K, 1i * phi);
 
     return numerator / denominator;
@@ -71,9 +75,12 @@ void StVol::HestonCallMdl::calc_option_price() {
 }
 
 double StVol::HestonCallMdl::get_delta() const {
+    // Delta equals P1, the share-measure exercise probability: the shifted
+    // characteristic fn charFn(phi - i) must be normalized by
+    // f(-i) = E[S_T] = S0*e^(rt) to be a valid characteristic fn
     auto realIntegrand = [this](double _phi) {
         auto phiShift = _phi - 1i;
-        auto numerator = charFn(phiShift);
+        auto numerator = charFn(phiShift) / (underlying.S0 * exp(underlying.r * underlying.t));
         auto denominator = 1i * _phi * pow(underlying.K, 1i * _phi);
         return real(numerator / denominator);
     };

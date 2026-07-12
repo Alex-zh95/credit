@@ -24,8 +24,10 @@ BOOST_AUTO_TEST_CASE(TestHestonPricing) {
     U.vLambda = 0.575;
     U.rho = -0.5711;
 
-    // Expected outcome comparison
-    const double expected_price = 11.540361819355377;
+    // Expected outcome comparison - reference value computed independently
+    // from the classic Heston (1993) two-probability formulation
+    // C = S0*P1 - K*e^(-rt)*P2 with the same parameters
+    const double expected_price = 10.820520;
     const double tolerance = 1e-3;
 
     // Running the pricing model
@@ -41,9 +43,17 @@ BOOST_AUTO_TEST_CASE(TestHestonPricing) {
     BOOST_TEST_MESSAGE("Model price: " << mdl_price);
     BOOST_TEST_MESSAGE("Percentage error: " << error * 100 << "%");
     BOOST_TEST_MESSAGE("Risk-neutral P2: " << mdl.get_rn_exercise_probability());
+    BOOST_TEST_MESSAGE("Delta (P1): " << mdl.get_delta());
 
     // Check if the error is within tolerance
     BOOST_CHECK(std::abs(error) < tolerance);
+
+    // Delta equals P1 and the exercise probability equals P2 from the
+    // two-probability formulation; reference values computed independently
+    const double expected_delta = 0.638713;
+    const double expected_p2 = 0.546664;
+    BOOST_CHECK(std::abs(mdl.get_delta() - expected_delta) < tolerance);
+    BOOST_CHECK(std::abs(mdl.get_rn_exercise_probability() - expected_p2) < tolerance);
 }
 
 // Test case 2: Heston asset volatility implied parameters calculation
