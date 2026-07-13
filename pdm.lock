@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:3c62bcf532fb7ec948c9e3a376f98a037948bb4c7f586b28025336bf6f841e5a"
+content_hash = "sha256:784a37c835a94eb9d28f729b479946f07e1145af05222d40622f14a9f2c53c6c"
 
 [[metadata.targets]]
 requires_python = "==3.12"
@@ -1553,6 +1553,23 @@ files = [
 ]
 
 [[package]]
+name = "pyside6-essentials"
+version = "6.11.1"
+requires_python = "<3.15,>=3.10"
+summary = "Python bindings for the Qt cross-platform application and UI framework (Essentials)"
+groups = ["default"]
+dependencies = [
+    "shiboken6==6.11.1",
+]
+files = [
+    {file = "pyside6_essentials-6.11.1-cp310-abi3-macosx_13_0_universal2.whl", hash = "sha256:228de53c2bc26b07e5021fbe3614fc44ca08e4dab9999af08c2b389d2c239957"},
+    {file = "pyside6_essentials-6.11.1-cp310-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:e3ef7027b41e4e55fadb56e3b3257dc8ee92154b639fe67fc4c8e05e9d976c60"},
+    {file = "pyside6_essentials-6.11.1-cp310-abi3-manylinux_2_39_aarch64.whl", hash = "sha256:a039b6da68a3a4b9d243217b2b98d475eed3f617159ef6be925badab53c11b0d"},
+    {file = "pyside6_essentials-6.11.1-cp310-abi3-win_amd64.whl", hash = "sha256:63311bd48e32c584599ab04b9ef7c324082374cd2c9fa533f978fb893bb47e40"},
+    {file = "pyside6_essentials-6.11.1-cp310-abi3-win_arm64.whl", hash = "sha256:11253ea52aabecefe9febddbbe78b43a824129e3af1cec98431028fba7fa954f"},
+]
+
+[[package]]
 name = "python-dateutil"
 version = "2.9.0.post0"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
@@ -1815,6 +1832,20 @@ files = [
 ]
 
 [[package]]
+name = "shiboken6"
+version = "6.11.1"
+requires_python = "<3.15,>=3.10"
+summary = "Python/C++ bindings helper module"
+groups = ["default"]
+files = [
+    {file = "shiboken6-6.11.1-cp310-abi3-macosx_13_0_universal2.whl", hash = "sha256:1a16867f103ef1c662a5f09dfed03273a9f81688b174555162c58e83650a3f02"},
+    {file = "shiboken6-6.11.1-cp310-abi3-manylinux_2_34_x86_64.whl", hash = "sha256:9a8bccfafc8805254cabcfa1edfaf55cd52889f4998c91ad0d9a4433fb1bcdbe"},
+    {file = "shiboken6-6.11.1-cp310-abi3-manylinux_2_39_aarch64.whl", hash = "sha256:1bd2f4314414df2d122d9f646e03b731bc6d6b5f77a5f53f99a4fe4e97d84e6f"},
+    {file = "shiboken6-6.11.1-cp310-abi3-win_amd64.whl", hash = "sha256:c2c6863aa80ec18c0f82cea3417837b279cdc60024ac17123461dc9042577df7"},
+    {file = "shiboken6-6.11.1-cp310-abi3-win_arm64.whl", hash = "sha256:7c8d9af17db4495d4fa5b1c393f218311c4855546b9dfa6a0bd21bcd66b55e9d"},
+]
+
+[[package]]
 name = "six"
 version = "1.17.0"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,>=2.7"
@@ -1974,7 +2005,7 @@ version = "2025.1"
 requires_python = ">=2"
 summary = "Provider of IANA time zone data"
 groups = ["default"]
-marker = "sys_platform == \"win32\" or sys_platform == \"emscripten\""
+marker = "sys_platform == \"emscripten\" or sys_platform == \"win32\""
 files = [
     {file = "tzdata-2025.1-py2.py3-none-any.whl", hash = "sha256:7e127113816800496f027041c570f50bcd464a020098a3b6b199517772303639"},
     {file = "tzdata-2025.1.tar.gz", hash = "sha256:24894909e88cdb28bd1636c6887801df64cb485bd593f2fd83ef29075a81d694"},
