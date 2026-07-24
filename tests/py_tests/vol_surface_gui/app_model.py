@@ -2,7 +2,7 @@
 Model layer: market data acquisition, Heston fitting and surface construction.
 
 No tkinter/matplotlib imports live here. The heavy functions at module level
-run inside a worker *process* (the pybind11 calls hold the GIL, so a thread
+run inside a worker *process* (the nanobind calls hold the GIL, so a thread
 would freeze the GUI); `VolSurfaceModel` owns the pool and returns futures.
 '''
 

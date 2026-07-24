@@ -1,0 +1,15 @@
+cpy_credit module size — pybind11 vs nanobind (Release config)
+==============================================================
+Build:   cmake -B build -DCMAKE_BUILD_TYPE=Release -DPython_EXECUTABLE=.venv/bin/python
+Target:  cpy_credit.cpython-312-darwin.so   (macOS arm64, Python 3.12)
+Date:    2026-07-24
+
+Binding library     Module size (bytes)     Module size (KB)
+-----------------   -------------------     ----------------
+pybind11                        273,696              267.3
+nanobind                        186,016              181.7
+-----------------   -------------------     ----------------
+Difference                       87,680               85.6
+Reduction                          32.0%
+
+nanobind is 32.0% smaller than pybind11 in the Release configuration.

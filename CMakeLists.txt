@@ -21,13 +21,20 @@ if(APPLE)
   endif()
 endif()
 
-set(PYBIND11_FINDPYTHON ON)
-find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
-find_package(pybind11 REQUIRED)
+find_package(Python 3.8 COMPONENTS Interpreter Development.Module REQUIRED)
+
+# Locate nanobind's CMake config shipped inside the installed Python package.
+execute_process(
+  COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  OUTPUT_VARIABLE nanobind_ROOT
+)
+find_package(nanobind CONFIG REQUIRED)
+
 find_package(NLopt REQUIRED)
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 
-pybind11_add_module(cpy_credit
+nanobind_add_module(cpy_credit
     src/credit/cpy_credit.cpp
     src/credit/risk_neutral.cpp
     src/credit/stvol.cpp

@@ -66,7 +66,7 @@ imported first), so import order doesn't matter.
 
 ## Performance notes
 
-- The pybind11 calls (`fit_Heston`, `get_Heston_call_price`) hold the GIL, so
+- The nanobind calls (`fit_Heston`, `get_Heston_call_price`) hold the GIL, so
   all C++ work runs in a **worker process** (spawned once, warmed at startup) —
   the UI never blocks; a background *thread* would still freeze the GUI. A
   live fit takes ~10–15 s on a few hundred quotes.

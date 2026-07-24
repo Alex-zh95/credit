@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:784a37c835a94eb9d28f729b479946f07e1145af05222d40622f14a9f2c53c6c"
+content_hash = "sha256:288e8978aa6798960e757d14b1eade9dff32624bf3fdc894b19841ebd138c506"
 
 [[metadata.targets]]
 requires_python = "==3.12"
@@ -1128,6 +1128,16 @@ files = [
 ]
 
 [[package]]
+name = "nanobind"
+version = "2.13.0"
+summary = "nanobind: tiny and efficient C++/Python bindings"
+groups = ["default"]
+files = [
+    {file = "nanobind-2.13.0-py3-none-any.whl", hash = "sha256:9268d7201eaf5519ae61b7a83175f2af77088cb4b99dd3ce5b00550f697da7b7"},
+    {file = "nanobind-2.13.0.tar.gz", hash = "sha256:c7b04d6a6a4cd57985571e605539399b51331ae455d7fce576a5e2fcb89b1dcf"},
+]
+
+[[package]]
 name = "nbclient"
 version = "0.10.2"
 requires_python = ">=3.9.0"
@@ -1505,17 +1515,6 @@ files = [
     {file = "pyarrow-24.0.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:25ea65d868eb04015cd18e6df2fbe98f07e5bda2abefabcb88fce39a947716f6"},
     {file = "pyarrow-24.0.0-cp312-cp312-win_amd64.whl", hash = "sha256:295f0a7f2e242dabd513737cf076007dc5b2d59237e3eca37b05c0c6446f3826"},
     {file = "pyarrow-24.0.0.tar.gz", hash = "sha256:85fe721a14dd823aca09127acbb06c3ca723efbd436c004f16bca601b04dcc83"},
-]
-
-[[package]]
-name = "pybind11"
-version = "3.0.4"
-requires_python = ">=3.8"
-summary = "Seamless operability between C++11 and Python"
-groups = ["default"]
-files = [
-    {file = "pybind11-3.0.4-py3-none-any.whl", hash = "sha256:961720ee652da51d531b7b2451a6bd2bc042b0106e6d9baa48ecb7d58034ce63"},
-    {file = "pybind11-3.0.4.tar.gz", hash = "sha256:3286b59c8a774b9ee650169302dd5a4eedc30a8617905a0560dd8ee44775130c"},
 ]
 
 [[package]]

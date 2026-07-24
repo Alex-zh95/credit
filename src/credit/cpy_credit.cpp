@@ -3,18 +3,20 @@
  * interface.
  */
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h> // Needed for binding STL containers
+#include <nanobind/nanobind.h>
+#include <nanobind/stl/tuple.h>  // Needed for binding std::tuple
+#include <nanobind/stl/vector.h> // Needed for binding std::vector containers
 #include <tuple>
 #include <utility>
-namespace py = pybind11;
+namespace nb = nanobind;
+using namespace nb::literals;
 
 #include "params.hpp"
 #include "risk_neutral.hpp"
 #include "stvol.hpp"
 
 /* C++ Interfaces for StVol::HestonCallMdl - the model takes its underlying by
- * value, so pybind's copies pass straight through.
+ * value, so nanobind's copies pass straight through.
  */
 
 double get_Heston_call_price(StVol::HestonUnderlying U0, double strike, double t = 1) {
@@ -40,81 +42,78 @@ get_Heston_default_probability(StVol::HestonUnderlying U_fitted, double asset, d
 }
 
 /* Exposing definitions to Python. */
-PYBIND11_MODULE(cpy_credit, m) {
+NB_MODULE(cpy_credit, m) {
     m.doc() =
         "Module containing procedures for structural credit models and capital determination.";
 
     // Bindings to risk_neutral.hpp
     m.def("get_asset_volatility", &get_asset_volatility,
-          "Numerically derive asset volatility given debt and equity", py::arg("E"),
-          py::arg("sigma_e"), py::arg("L"), py::arg("r"), py::arg("t") = 1, py::arg("n_iter") = 50);
+          "Numerically derive asset volatility given debt and equity", "E"_a, "sigma_e"_a, "L"_a,
+          "r"_a, "t"_a = 1, "n_iter"_a = 50);
 
     m.def(
         "get_vanilla_default_probability",
         [](double a0, double rf, double sigma_a, double L, double t) {
             return get_vanilla_default_probability(AssetDefaultParams(a0, rf, sigma_a, L, t));
         },
-        "Attain risk-neutral default probability (Merton)", py::arg("a0"), py::arg("rf"),
-        py::arg("sigma_a"), py::arg("L"), py::arg("t") = 1);
+        "Attain risk-neutral default probability (Merton)", "a0"_a, "rf"_a, "sigma_a"_a, "L"_a,
+        "t"_a = 1);
 
     m.def(
         "get_fpt_default_probability",
         [](double a0, double rf, double sigma_a, double L, double q, double gamma, double t) {
             return get_fpt_default_probability(AssetDefaultParams(a0, rf, sigma_a, L, t, q), gamma);
         },
-        "Attain risk-neutral default probability (First Passage Time).", py::arg("a0"),
-        py::arg("rf"), py::arg("sigma_a"), py::arg("L"), py::arg("delta") = 0.,
-        py::arg("gamma") = 0., py::arg("t") = 1.);
+        "Attain risk-neutral default probability (First Passage Time).", "a0"_a, "rf"_a,
+        "sigma_a"_a, "L"_a, "delta"_a = 0., "gamma"_a = 0., "t"_a = 1.);
 
     m.def("wang_transform", &wang_transform, "Apply Wang transform to provided probability vector",
-          py::arg("P"), py::arg("sharpe_ratio"), py::arg("inverse") = false);
+          "P"_a, "sharpe_ratio"_a, "inverse"_a = false);
 
     m.def("get_returns_with_put", &get_returns_with_put,
-          "Calculate expected returns with protection from put option", py::arg("y"),
-          py::arg("y_var"), py::arg("put"), py::arg("r"));
+          "Calculate expected returns with protection from put option", "y"_a, "y_var"_a, "put"_a,
+          "r"_a);
 
     m.def("get_min_capital_ROL", &get_min_capital_ROL,
-          "Obtain minimum rates on line. Set p=0 and i=risk-free rate if not using options",
-          py::arg("y"), py::arg("p"), py::arg("i"));
+          "Obtain minimum rates on line. Set p=0 and i=risk-free rate if not using options", "y"_a,
+          "p"_a, "i"_a);
 
     // Bindings to params.hpp: base class holding parameters common to all underlyings
-    py::class_<StandardUnderlying>(m, "StandardUnderlying")
-        .def(py::init<double, double, double, double, double, bool, double>(), py::arg("S0"),
-             py::arg("K"), py::arg("r"), py::arg("sigma"), py::arg("t") = 1.,
-             py::arg("call") = true, py::arg("q") = 0.)
-        .def(py::init<>())
-        .def_readwrite("S0", &StandardUnderlying::S0)
-        .def_readwrite("K", &StandardUnderlying::K)
-        .def_readwrite("r", &StandardUnderlying::r)
-        .def_readwrite("sigma", &StandardUnderlying::sigma)
-        .def_readwrite("t", &StandardUnderlying::t)
-        .def_readwrite("call", &StandardUnderlying::call)
-        .def_readwrite("q", &StandardUnderlying::q);
+    nb::class_<StandardUnderlying>(m, "StandardUnderlying")
+        .def(nb::init<double, double, double, double, double, bool, double>(), "S0"_a, "K"_a, "r"_a,
+             "sigma"_a, "t"_a = 1., "call"_a = true, "q"_a = 0.)
+        .def(nb::init<>())
+        .def_rw("S0", &StandardUnderlying::S0)
+        .def_rw("K", &StandardUnderlying::K)
+        .def_rw("r", &StandardUnderlying::r)
+        .def_rw("sigma", &StandardUnderlying::sigma)
+        .def_rw("t", &StandardUnderlying::t)
+        .def_rw("call", &StandardUnderlying::call)
+        .def_rw("q", &StandardUnderlying::q);
 
     // Bindings to stvol.hpp: HestonUnderlying extends StandardUnderlying
-    py::class_<StVol::HestonUnderlying, StandardUnderlying>(m, "Underlying")
-        .def(py::init<>())
-        .def_readwrite("v0", &StVol::HestonUnderlying::v0)
-        .def_readwrite("alpha", &StVol::HestonUnderlying::alpha)
-        .def_readwrite("vSig", &StVol::HestonUnderlying::vSig)
-        .def_readwrite("rho", &StVol::HestonUnderlying::rho)
-        .def_readwrite("vTheta", &StVol::HestonUnderlying::vTheta)
-        .def_readwrite("vLambda", &StVol::HestonUnderlying::vLambda)
+    nb::class_<StVol::HestonUnderlying, StandardUnderlying>(m, "Underlying")
+        .def(nb::init<>())
+        .def_rw("v0", &StVol::HestonUnderlying::v0)
+        .def_rw("alpha", &StVol::HestonUnderlying::alpha)
+        .def_rw("vSig", &StVol::HestonUnderlying::vSig)
+        .def_rw("rho", &StVol::HestonUnderlying::rho)
+        .def_rw("vTheta", &StVol::HestonUnderlying::vTheta)
+        .def_rw("vLambda", &StVol::HestonUnderlying::vLambda)
         // Backwards-compatible alias: "rf" maps onto the inherited risk-free rate "r"
-        .def_property(
+        .def_prop_rw(
             "rf", [](const StVol::HestonUnderlying& u) { return u.r; },
             [](StVol::HestonUnderlying& u, double rf) { u.r = rf; });
 
     m.def("fit_Heston", &StVol::fitHeston, "Fit a Heston model to available call options data",
-          py::arg("S0"), py::arg("Ks"), py::arg("rfs"), py::arg("Ts"), py::arg("Ps"),
-          py::arg("Volumes"));
+          "S0"_a, "Ks"_a, "rfs"_a, "Ts"_a, "Ps"_a, "Volumes"_a);
 
     m.def("get_Heston_default_probability", &get_Heston_default_probability,
           "Attain risk-neutral default probability (Heston). Also returns a copy of derived asset "
           "vol model.",
-          py::arg("U_fitted"), py::arg("asset"), py::arg("debt"), py::arg("maturity") = 1.0);
+          "U_fitted"_a, "asset"_a, "debt"_a, "maturity"_a = 1.0);
 
     m.def("get_Heston_call_price", &get_Heston_call_price,
-          "Calculate price of a European vanilla call option under Heston model.", py::arg("U0"),
-          py::arg("strike"), py::arg("t") = 1.0);
+          "Calculate price of a European vanilla call option under Heston model.", "U0"_a,
+          "strike"_a, "t"_a = 1.0);
 }

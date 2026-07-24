@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Homebrew dependencies
-        run: brew install nlopt boost pybind11
+        run: brew install nlopt boost
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -38,10 +38,14 @@ jobs:
       - name: Build C++ extension
         run: |
           brew_prefix="$(brew --prefix)"
+          # nanobind ships as a Python package in the PDM venv; build against that
+          # interpreter so CMake can locate its CMake config.
           cmake -S . -B build \
             -DCMAKE_PREFIX_PATH="$brew_prefix" \
             -DCMAKE_INCLUDE_PATH="$brew_prefix/include" \
-            -DCMAKE_LIBRARY_PATH="$brew_prefix/lib"
+            -DCMAKE_LIBRARY_PATH="$brew_prefix/lib" \
+            -DPython_EXECUTABLE="$PWD/.venv/bin/python" \
+            -DPython3_EXECUTABLE="$PWD/.venv/bin/python"
           cmake --build build
 
       - name: Run C++ tests
