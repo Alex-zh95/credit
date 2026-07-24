@@ -132,8 +132,14 @@ def get_call_information(ticker_symb: str) -> tuple[float, pd.DataFrame]:
     vol_surface[['bid', 'ask', 'strike']] = vol_surface[['bid', 'ask', 'strike']].apply(pd.to_numeric)
     vol_surface['price'] = vol_surface[['bid', 'ask']].apply(np.mean, axis=1)
 
+    # Keep only out-of-the-money calls (strike above spot). OTM options carry the
+    # cleaner volatility signal - ITM calls are dominated by intrinsic value, so
+    # their prices are far less sensitive to the volatility parameters we fit.
+    vol_surface = vol_surface[vol_surface['strike'] > S0]
+    print(f"All {len(vol_surface)} options retained are out-of-the-money: {(vol_surface['strike'] > S0).all()}")
+
     # Step 3: Apply a yield curve to generate the risk-free rate applicable for each maturity
     y_curve = get_latest_yields()
     vol_surface['rf'] = vol_surface['maturity'].apply(y_curve)
 
-    return S0, vol_surface[['maturity', 'strike', 'price', 'rf', 'volume', 'impliedVolatility', 'inTheMoney']]
+    return S0, vol_surface[['maturity', 'strike', 'price', 'rf', 'volume', 'impliedVolatility']]
